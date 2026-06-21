@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+dist
+dist-ssr
+*.local
+
+# Lock files
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Build
+coverage
