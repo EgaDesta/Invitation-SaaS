@@ -25,9 +25,12 @@ export default function Landing() {
   const [plans, setPlans] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase.from("subscription_plans").select("*").order("price").then(({ data }) => {
-      if (data) setPlans(data);
-    });
+    supabase
+      .from("subscription_plans")
+      .select("*")
+      .order("price")
+      .then(({ data }) => { if (data) setPlans(data); })
+      .catch((err) => console.error("Failed to load plans:", err));
   }, []);
 
   return (
