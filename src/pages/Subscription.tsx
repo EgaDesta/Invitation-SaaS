@@ -81,11 +81,24 @@ export default function Subscription() {
                     {plan.price > 0 && <span className="text-sm text-muted-foreground">/bulan</span>}
                   </p>
                   <ul className="space-y-2 flex-1 mb-6">
-                    {(plan.features as string[])?.map((f: string) => (
-                      <li key={f} className="flex items-start gap-2 text-sm">
-                        <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" /> {f}
-                      </li>
-                    ))}
+                    {(() => {
+                      const feats = plan.features;
+                      if (!feats) return null;
+                      const items: string[] = Array.isArray(feats)
+                        ? feats
+                        : typeof feats === "object"
+                          ? Object.entries(feats).map(([k, v]) => {
+                              if (v === true) return k.replace(/_/g, " ");
+                              if (Array.isArray(v)) return `${k}: ${v.join(", ")}`;
+                              return `${k}: ${v}`;
+                            })
+                          : [];
+                      return items.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm">
+                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" /> {f}
+                        </li>
+                      ));
+                    })()}
                   </ul>
                   <Button
                     className="w-full"
