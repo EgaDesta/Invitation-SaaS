@@ -101,9 +101,12 @@ export default function CreateInvitation() {
     setLoading(true);
 
     const slug = generateSlug();
+    // Only use template_id if it exists in the database (UUID format)
+    // Hardcoded templates (TEMPLATE_CONFIGS) have string IDs that don't exist in DB
+    const dbTemplate = templates.find((t) => t.id === form.template_id);
     const { error } = await supabase.from("invitations").insert({
       user_id: user.id,
-      template_id: form.template_id || null,
+      template_id: dbTemplate ? form.template_id : null,
       slug,
       title: form.title,
       event_type: form.event_type,

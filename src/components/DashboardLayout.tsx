@@ -51,15 +51,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-200",
+          "fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-card border-r border-border flex flex-col transition-transform duration-200",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
-          <Link to="/" className="font-display text-xl font-bold text-sidebar-primary">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-border">
+          <Link to="/" className="font-display text-xl font-bold text-foreground">
             Undangan<span className="text-accent">ku</span>
           </Link>
-          <button className="lg:hidden text-sidebar-foreground" onClick={() => setSidebarOpen(false)}>
+          <button className="lg:hidden text-foreground" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -72,8 +72,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 location.pathname === item.to
-                  ? "bg-sidebar-accent text-sidebar-primary"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:bg-secondary/50"
               )}
             >
               <item.icon className="w-4 h-4" />
@@ -81,7 +81,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </Link>
           ))}
           {isAdmin && (
-            <div className="pt-4 mt-4 border-t border-sidebar-border">
+            <div className="pt-4 mt-4 border-t border-border">
               <p className="px-3 text-xs text-muted-foreground mb-2">USER</p>
               {userNav.map((item) => (
                 <Link
@@ -91,8 +91,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     location.pathname === item.to
-                      ? "bg-sidebar-accent text-sidebar-primary"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:bg-secondary/50"
                   )}
                 >
                   <item.icon className="w-4 h-4" />
@@ -102,10 +102,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
           )}
         </nav>
-        <div className="p-4 border-t border-sidebar-border space-y-2">
+        <div className="p-4 border-t border-border space-y-2">
           <button
             onClick={toggleDark}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 w-full"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-secondary/50 w-full"
           >
             {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             {dark ? "Mode Terang" : "Mode Gelap"}

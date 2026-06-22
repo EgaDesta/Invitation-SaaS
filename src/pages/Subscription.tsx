@@ -70,7 +70,7 @@ export default function Subscription() {
           </Card>
         )}
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((plan, i) => (
             <motion.div key={plan.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
               <Card className={`h-full ${currentSub?.plan_id === plan.id ? "border-primary" : ""}`}>

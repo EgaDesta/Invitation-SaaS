@@ -71,9 +71,7 @@ export default function Landing() {
       }
       
       if (data) {
-        // Show only 3 plans: Gratis, Basic, Premium (hide Pro)
-        const limited = data.filter((p: any) => p.name !== "Pro");
-        setPlans(limited);
+        setPlans(data);
       }
     };
     
@@ -357,11 +355,11 @@ export default function Landing() {
             <p className="text-muted-foreground text-sm mt-2">Mulai gratis, upgrade kapan saja.</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
             {plans.map((plan, i) => {
               const isPopular = i === 1;
               // Assign tone to each plan
-              const toneKey = (["brown", "rose", "gold"] as const)[i] || "brown";
+              const toneKey = (["brown", "rose", "gold", "brown"] as const)[i] || "brown";
               const tone = TONE[toneKey];
 
               return (
