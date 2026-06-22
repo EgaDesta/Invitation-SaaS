@@ -1,5 +1,6 @@
 import { Heart, Calendar, Clock, MapPin, Music, Send, MessageCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { isCustomDesign, FONT_OPTIONS, CustomDesignData } from "@/lib/customDesignTypes";
 
 interface PreviewProps {
   form: {
@@ -13,6 +14,7 @@ interface PreviewProps {
     event_description: string;
     map_embed_url: string;
     template_id: string;
+    cover_image_url: string;
   };
   templateData?: any;
 }
@@ -40,24 +42,85 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
     return () => clearInterval(interval);
   }, [form.event_date]);
 
-  const colors = templateData?.colors || { primary: "#B76E79", secondary: "#F5E6CC", text: "#2D2D2D", bg: "#FFFAF5" };
-  const fonts = templateData?.fonts || { display: "Playfair Display", body: "Inter" };
+  // Load Google Fonts for custom design
+  useEffect(() => {
+    if (!templateData || !isCustomDesign(templateData)) return;
+    const cd = templateData as CustomDesignData;
+    const fonts = [cd.fonts.heading, cd.fonts.body];
+    const unique = [...new Set(fonts)];
+    const googleFonts = unique.map((f) => {
+      const opt = FONT_OPTIONS.find((fo) => fo.name === f);
+      return opt ? opt.google : f.replace(/ /g, "+");
+    });
+    const link = document.createElement("link");
+    link.href = `https://fonts.googleapis.com/css2?${googleFonts.map((f) => `family=${f}:wght@300;400;500;600;700;800;900`).join("&")}&display=swap`;
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    return () => { document.head.removeChild(link); };
+  }, [templateData]);
+
+  const custom = isCustomDesign(templateData) ? templateData as CustomDesignData : null;
+
+  const colors = custom
+    ? { primary: custom.colors.primary, secondary: custom.colors.secondary, text: custom.colors.text, bg: custom.colors.background }
+    : templateData?.colors || { primary: "#B76E79", secondary: "#F5E6CC", text: "#2D2D2D", bg: "#FFFAF5" };
+
+  const fonts = custom
+    ? { display: `"${custom.fonts.heading}", serif`, body: `"${custom.fonts.body}", sans-serif` }
+    : templateData?.fonts || { display: "Playfair Display", body: "Inter" };
+
+  const headingFont = custom ? fonts.display : (templateData?.fonts?.display ? `"${templateData.fonts.display}", serif` : "Playfair Display, serif");
+
   const eventDate = form.event_date ? new Date(form.event_date) : null;
 
+  // Background style for custom
+  const bgStyle: React.CSSProperties = {};
+  if (custom) {
+    const bg = custom.background;
+    if (bg.type === "gradient") {
+      const dir = bg.gradientDirection === "to-r" ? "to right" : bg.gradientDirection === "to-b" ? "to bottom" : bg.gradientDirection === "to-br" ? "to bottom right" : "to top left";
+      bgStyle.background = `linear-gradient(${dir}, ${bg.gradientFrom}, ${bg.gradientVia}, ${bg.gradientTo})`;
+    } else if (bg.type === "solid") {
+      bgStyle.background = bg.gradientFrom;
+    }
+  }
+
+  const radiusClass = custom ? ({ none: "rounded-none", sm: "rounded-sm", md: "rounded-md", lg: "rounded-lg", xl: "rounded-xl", full: "rounded-full" }[custom.layout.borderRadius] || "rounded-lg") : "rounded-lg";
+
+  const showSection = (key: string) => custom ? (custom.sections as any)[key] !== false : true;
+
   return (
-    <div className="w-full h-full overflow-y-auto" style={{ backgroundColor: colors.bg, color: colors.text, fontFamily: fonts.body }}>
+    <div className="w-full h-full overflow-y-auto" style={{
+      backgroundColor: custom ? undefined : colors.bg,
+      color: colors.text,
+      fontFamily: custom ? fonts.body : (templateData?.fonts?.body ? `"${templateData.fonts.body}", sans-serif` : "Inter, sans-serif"),
+      ...bgStyle,
+    }}>
       {/* Cover */}
       <div
-        className="min-h-[50vh] flex flex-col items-center justify-center text-center p-6"
+        className="min-h-[50vh] flex flex-col items-center justify-center text-center p-6 relative overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${colors.primary}15, ${colors.secondary}30)` }}
       >
-        <Heart className="w-8 h-8 mb-4" style={{ color: colors.primary }} />
-        <p className="text-xs uppercase tracking-[3px] mb-2 opacity-60">Kepada Yth.</p>
-        <h2 className="text-xl font-semibold mb-4" style={{ fontFamily: fonts.display }}>Tamu Undangan</h2>
-        <p className="text-xs opacity-60 mb-4">Anda diundang untuk hadir di</p>
-        <h1 className="text-2xl font-bold" style={{ fontFamily: fonts.display, color: colors.primary }}>
-          {form.title || "Judul Undangan"}
-        </h1>
+        {form.cover_image_url && (
+          <div className="absolute inset-0">
+            <img src={form.cover_image_url} alt="Cover" className="w-full h-full object-cover opacity-30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white/80 to-white/20" />
+          </div>
+        )}
+        <div className="relative z-10">
+          <Heart className="w-8 h-8 mb-4 mx-auto" style={{ color: colors.primary }} fill="currentColor" />
+          <p className="text-xs uppercase tracking-[3px] mb-2 opacity-60">Kepada Yth.</p>
+          <h2 className="text-xl font-semibold mb-4" style={{ fontFamily: headingFont }}>Tamu Undangan</h2>
+          <p className="text-xs opacity-60 mb-4">Anda diundang untuk hadir di</p>
+          <h1 className="text-2xl font-bold" style={{
+            fontFamily: headingFont,
+            background: `linear-gradient(to right, ${colors.primary}, ${custom?.colors.accent || colors.secondary})`,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}>
+            {form.title || "Judul Undangan"}
+          </h1>
+        </div>
       </div>
 
       {/* Content */}
@@ -67,7 +130,7 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
           <p className="text-xs uppercase tracking-[3px] opacity-60 mb-2">
             {form.event_type === "wedding" ? "The Wedding of" : form.event_type === "birthday" ? "Happy Birthday" : "You're Invited"}
           </p>
-          <h2 className="text-xl font-bold" style={{ fontFamily: fonts.display }}>
+          <h2 className="text-xl font-bold" style={{ fontFamily: headingFont }}>
             {form.host_names || form.event_name || form.title || "Nama"}
           </h2>
           {form.event_description && (
@@ -75,8 +138,33 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
           )}
         </div>
 
+        {/* Couple Story (custom only) */}
+        {custom && showSection("showCoupleStory") && custom.sections.coupleStory && (
+          <div className={`${radiusClass} p-4 border`} style={{ backgroundColor: `${colors.primary}08`, borderColor: `${colors.primary}20` }}>
+            <p className="text-xs text-center font-semibold mb-2" style={{ color: colors.primary, fontFamily: headingFont }}>Cerita Kami</p>
+            {(custom.sections.brideName || custom.sections.groomName) && (
+              <div className="flex justify-around mb-2">
+                <div className="text-center">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${custom.colors.accent})` }}>
+                    {custom.sections.brideName?.charAt(0) || "♀"}
+                  </div>
+                  <p className="text-[10px] font-medium mt-1">{custom.sections.brideName}</p>
+                </div>
+                <div className="flex items-center"><Heart className="w-4 h-4" style={{ color: colors.primary }} fill="currentColor" /></div>
+                <div className="text-center">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto" style={{ background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})` }}>
+                    {custom.sections.groomName?.charAt(0) || "♂"}
+                  </div>
+                  <p className="text-[10px] font-medium mt-1">{custom.sections.groomName}</p>
+                </div>
+              </div>
+            )}
+            <p className="text-[10px] text-center italic opacity-70">"{custom.sections.coupleStory}"</p>
+          </div>
+        )}
+
         {/* Countdown */}
-        {form.event_date && (
+        {form.event_date && showSection("showCountdown") && (
           <div className="text-center">
             <p className="text-xs uppercase tracking-[2px] opacity-60 mb-3">Hitung Mundur</p>
             <div className="flex justify-center gap-2">
@@ -86,8 +174,8 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
                 { val: countdown.minutes, label: "Menit" },
                 { val: countdown.seconds, label: "Detik" },
               ].map((c) => (
-                <div key={c.label} className="rounded-lg p-2 min-w-[50px]" style={{ backgroundColor: `${colors.secondary}40` }}>
-                  <p className="text-lg font-bold" style={{ color: colors.primary }}>{c.val}</p>
+                <div key={c.label} className={`${radiusClass} p-2 min-w-[50px]`} style={{ backgroundColor: `${colors.primary}15` }}>
+                  <p className="text-lg font-bold" style={{ color: colors.primary }}>{String(c.val).padStart(2, "0")}</p>
                   <p className="text-[10px] opacity-60">{c.label}</p>
                 </div>
               ))}
@@ -99,7 +187,7 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[2px] opacity-60 text-center mb-3">Detail Acara</p>
           {eventDate && (
-            <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: `${colors.secondary}25` }}>
+            <div className={`flex items-center gap-2 p-3 ${radiusClass}`} style={{ backgroundColor: `${colors.primary}10` }}>
               <Calendar className="w-4 h-4 shrink-0" style={{ color: colors.primary }} />
               <div>
                 <p className="text-xs font-medium">
@@ -110,16 +198,16 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
             </div>
           )}
           {form.event_location && (
-            <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: `${colors.secondary}25` }}>
-              <MapPin className="w-4 h-4 shrink-0" style={{ color: colors.primary }} />
+            <div className={`flex items-center gap-2 p-3 ${radiusClass}`} style={{ backgroundColor: `${colors.secondary}20` }}>
+              <MapPin className="w-4 h-4 shrink-0" style={{ color: colors.secondary }} />
               <p className="text-xs font-medium">{form.event_location}</p>
             </div>
           )}
         </div>
 
         {/* Map placeholder */}
-        {form.map_embed_url && (
-          <div className="rounded-lg overflow-hidden border" style={{ borderColor: `${colors.secondary}50` }}>
+        {form.map_embed_url && showSection("showMaps") && (
+          <div className={`${radiusClass} overflow-hidden border`} style={{ borderColor: `${colors.secondary}50` }}>
             <div className="w-full h-32 bg-muted flex items-center justify-center">
               <MapPin className="w-6 h-6 opacity-30" />
               <span className="text-xs opacity-40 ml-2">Google Maps</span>
@@ -128,19 +216,21 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
         )}
 
         {/* RSVP Preview */}
-        <div className="text-center space-y-3">
-          <p className="text-xs uppercase tracking-[2px] opacity-60">Konfirmasi Kehadiran</p>
-          <div className="p-4 rounded-lg" style={{ backgroundColor: `${colors.secondary}20` }}>
-            <div className="space-y-2">
-              <div className="h-8 rounded border opacity-30" />
-              <div className="h-8 rounded border opacity-30" />
-              <div className="h-16 rounded border opacity-30" />
-              <div className="h-8 rounded-lg flex items-center justify-center text-xs text-white" style={{ backgroundColor: colors.primary }}>
-                <Send className="w-3 h-3 mr-1" /> Kirim RSVP
+        {showSection("showRsvp") && (
+          <div className="text-center space-y-3">
+            <p className="text-xs uppercase tracking-[2px] opacity-60">Konfirmasi Kehadiran</p>
+            <div className={`p-4 ${radiusClass}`} style={{ backgroundColor: `${colors.primary}08` }}>
+              <div className="space-y-2">
+                <div className="h-8 rounded border opacity-30" />
+                <div className="h-8 rounded border opacity-30" />
+                <div className="h-16 rounded border opacity-30" />
+                <div className={`h-8 ${radiusClass} flex items-center justify-center text-xs text-white`} style={{ backgroundColor: colors.primary }}>
+                  <Send className="w-3 h-3 mr-1" /> Kirim RSVP
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Footer */}
         <div className="text-center pt-4 border-t opacity-50" style={{ borderColor: `${colors.secondary}50` }}>

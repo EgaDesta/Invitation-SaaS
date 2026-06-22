@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 import InvitationPreview from "@/components/InvitationPreview";
+import TemplateBuilder from "@/components/TemplateBuilder";
 import { TEMPLATE_CONFIGS } from "@/lib/templates";
-import { ArrowLeft, ArrowRight, Upload, Image, Music } from "lucide-react";
+import { DEFAULT_CUSTOM_DESIGN, CustomDesignData } from "@/lib/customDesignTypes";
+import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout } from "lucide-react";
 
 const steps = ["Template", "Detail Acara", "Media", "Preview"];
 
@@ -25,6 +27,9 @@ export default function CreateInvitation() {
   const [loading, setLoading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingMusic, setUploadingMusic] = useState(false);
+  const [mode, setMode] = useState<"template" | "custom">("template");
+  const [customDesign, setCustomDesign] = useState<CustomDesignData>({ ...DEFAULT_CUSTOM_DESIGN });
+
   const [form, setForm] = useState({
     template_id: "",
     title: "",
@@ -52,6 +57,7 @@ export default function CreateInvitation() {
     templates.find((t) => t.id === form.template_id);
 
   const getTemplateData = () => {
+    if (mode === "custom") return customDesign;
     if (!selectedTemplate) return undefined;
     if ("colors" in selectedTemplate) return { colors: selectedTemplate.colors, fonts: selectedTemplate.fonts };
     return selectedTemplate.template_data;
@@ -101,12 +107,14 @@ export default function CreateInvitation() {
     setLoading(true);
 
     const slug = generateSlug();
-    // Only use template_id if it exists in the database (UUID format)
-    // Hardcoded templates (TEMPLATE_CONFIGS) have string IDs that don't exist in DB
     const dbTemplate = templates.find((t) => t.id === form.template_id);
+
+    // Build custom_data
+    const customData = mode === "custom" ? customDesign : null;
+
     const { error } = await supabase.from("invitations").insert({
       user_id: user.id,
-      template_id: dbTemplate ? form.template_id : null,
+      template_id: mode === "template" && dbTemplate ? form.template_id : null,
       slug,
       title: form.title,
       event_type: form.event_type,
@@ -120,6 +128,7 @@ export default function CreateInvitation() {
       cover_image_url: form.cover_image_url || null,
       music_url: form.music_url || null,
       is_published: true,
+      custom_data: customData,
     });
 
     if (error) {
@@ -173,47 +182,78 @@ export default function CreateInvitation() {
               <CardContent className="p-6">
                 {step === 0 && (
                   <div className="space-y-4">
-                    <CardTitle className="font-display">Pilih Template</CardTitle>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {TEMPLATE_CONFIGS.map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => updateForm("template_id", t.id)}
-                          className={`p-3 rounded-xl border-2 text-left transition-all ${
-                            form.template_id === t.id
-                              ? "border-primary bg-primary/5 shadow-md"
-                              : "border-border hover:border-primary/50"
-                          }`}
-                        >
-                          <div
-                            className="w-full h-20 rounded-lg mb-2"
-                            style={{ background: `linear-gradient(135deg, ${t.colors.primary}, ${t.colors.secondary})` }}
-                          />
-                          <p className="font-medium text-sm truncate">{t.name}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{t.category}</p>
-                        </button>
-                      ))}
-                      {templates.filter((t) => !TEMPLATE_CONFIGS.find((tc) => tc.id === t.id)).map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => updateForm("template_id", t.id)}
-                          className={`p-3 rounded-xl border-2 text-left transition-all ${
-                            form.template_id === t.id
-                              ? "border-primary bg-primary/5 shadow-md"
-                              : "border-border hover:border-primary/50"
-                          }`}
-                        >
-                          <div
-                            className="w-full h-20 rounded-lg mb-2"
-                            style={{
-                              background: `linear-gradient(135deg, ${(t.template_data as any)?.colors?.primary || "#B76E79"}, ${(t.template_data as any)?.colors?.secondary || "#F5E6CC"})`,
-                            }}
-                          />
-                          <p className="font-medium text-sm truncate">{t.name}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{t.category}</p>
-                        </button>
-                      ))}
+                    <CardTitle className="font-display">Pilih Template atau Buat Custom</CardTitle>
+
+                    {/* Mode Toggle */}
+                    <div className="flex gap-2 p-1 bg-secondary rounded-lg">
+                      <button
+                        onClick={() => setMode("template")}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+                          mode === "template"
+                            ? "bg-background shadow-sm text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Layout className="w-4 h-4" />
+                        Pilih Template
+                      </button>
+                      <button
+                        onClick={() => setMode("custom")}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+                          mode === "custom"
+                            ? "bg-background shadow-sm text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Palette className="w-4 h-4" />
+                        Desain Custom
+                      </button>
                     </div>
+
+                    {mode === "template" ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {TEMPLATE_CONFIGS.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => updateForm("template_id", t.id)}
+                            className={`p-3 rounded-xl border-2 text-left transition-all ${
+                              form.template_id === t.id
+                                ? "border-primary bg-primary/5 shadow-md"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <div
+                              className="w-full h-20 rounded-lg mb-2"
+                              style={{ background: `linear-gradient(135deg, ${t.colors.primary}, ${t.colors.secondary})` }}
+                            />
+                            <p className="font-medium text-sm truncate">{t.name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{t.category}</p>
+                          </button>
+                        ))}
+                        {templates.filter((t) => !TEMPLATE_CONFIGS.find((tc) => tc.id === t.id)).map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => updateForm("template_id", t.id)}
+                            className={`p-3 rounded-xl border-2 text-left transition-all ${
+                              form.template_id === t.id
+                                ? "border-primary bg-primary/5 shadow-md"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <div
+                              className="w-full h-20 rounded-lg mb-2"
+                              style={{
+                                background: `linear-gradient(135deg, ${(t.template_data as any)?.colors?.primary || "#B76E79"}, ${(t.template_data as any)?.colors?.secondary || "#F5E6CC"})`,
+                              }}
+                            />
+                            <p className="font-medium text-sm truncate">{t.name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{t.category}</p>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <TemplateBuilder design={customDesign} onChange={setCustomDesign} />
+                    )}
                   </div>
                 )}
 
@@ -272,7 +312,7 @@ export default function CreateInvitation() {
                 {step === 2 && (
                   <div className="space-y-6">
                     <CardTitle className="font-display">Media</CardTitle>
-                    
+
                     {/* Cover Image Upload */}
                     <div className="space-y-3">
                       <Label className="flex items-center gap-2"><Image className="w-4 h-4" /> Foto Cover</Label>
@@ -326,6 +366,7 @@ export default function CreateInvitation() {
                     <div className="rounded-xl border bg-secondary/30 p-4 space-y-2 text-sm">
                       <p><strong>Judul:</strong> {form.title || "-"}</p>
                       <p><strong>Tipe:</strong> {form.event_type}</p>
+                      <p><strong>Mode:</strong> {mode === "custom" ? "Desain Custom" : "Template"}</p>
                       <p><strong>Tuan Rumah:</strong> {form.host_names || "-"}</p>
                       <p><strong>Tanggal:</strong> {form.event_date ? new Date(form.event_date).toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p>
                       <p><strong>Lokasi:</strong> {form.event_location || "-"}</p>
