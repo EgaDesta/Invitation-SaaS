@@ -1,19 +1,44 @@
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Sparkles, Users, Music, QrCode, MapPin, ArrowRight, Check, Star, ChevronRight, Zap } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { Heart, Sparkles, Users, Music, QrCode, MapPin, ArrowRight, Check, Star, ChevronRight, Zap, Calendar, Gift } from "lucide-react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 
+/* ── 3-tone palette classes ── */
+const TONE = {
+  brown: {
+    bg: "bg-[hsl(var(--tone-brown))]",
+    bgSoft: "bg-[hsl(var(--tone-brown-soft))]",
+    text: "text-[hsl(var(--tone-brown))]",
+    border: "border-[hsl(var(--tone-brown))]",
+    ring: "ring-[hsl(var(--tone-brown))]",
+  },
+  rose: {
+    bg: "bg-[hsl(var(--tone-rose))]",
+    bgSoft: "bg-[hsl(var(--tone-rose-soft))]",
+    text: "text-[hsl(var(--tone-rose))]",
+    border: "border-[hsl(var(--tone-rose))]",
+    ring: "ring-[hsl(var(--tone-rose))]",
+  },
+  gold: {
+    bg: "bg-[hsl(var(--tone-gold))]",
+    bgSoft: "bg-[hsl(var(--tone-gold-soft))]",
+    text: "text-[hsl(var(--tone-gold))]",
+    border: "border-[hsl(var(--tone-gold))]",
+    ring: "ring-[hsl(var(--tone-gold))]",
+  },
+};
+
 const features = [
-  { icon: Heart, title: "Template Elegan", desc: "Pilihan template premium untuk pernikahan, ulang tahun, & acara besar", size: "large" },
-  { icon: Users, title: "Link Personal", desc: "Setiap tamu mendapat undangan dengan nama mereka", size: "small" },
-  { icon: Music, title: "Musik Latar", desc: "Upload musik sendiri atau pilih dari koleksi", size: "small" },
-  { icon: QrCode, title: "QR Code", desc: "Generate & bagikan dengan mudah", size: "tall" },
-  { icon: MapPin, title: "Google Maps", desc: "Embed lokasi acara langsung di undangan", size: "small" },
-  { icon: Sparkles, title: "RSVP & Countdown", desc: "Form RSVP dan hitung mundur otomatis", size: "small" },
+  { icon: Heart, title: "Template Elegan", desc: "Template premium untuk pernikahan, ulang tahun, & acara besar", tone: "brown" as const },
+  { icon: Users, title: "Link Personal", desc: "Setiap tamu mendapat undangan dengan nama unik mereka", tone: "rose" as const },
+  { icon: Music, title: "Musik Latar", desc: "Upload musik sendiri atau pilih dari koleksi", tone: "gold" as const },
+  { icon: QrCode, title: "QR Code", desc: "Generate & bagikan undangan via QR code", tone: "rose" as const },
+  { icon: MapPin, title: "Google Maps", desc: "Embed lokasi acara langsung di undangan", tone: "gold" as const },
+  { icon: Calendar, title: "RSVP & Countdown", desc: "Form RSVP dan hitung mundur otomatis", tone: "brown" as const },
 ];
 
 const testimonials = [
@@ -22,20 +47,37 @@ const testimonials = [
   { name: "Budi & Sari", role: "Pernikahan, Jakarta", text: "Hemat biaya cetak, tapi hasilnya jauh lebih elegan dari undangan fisik.", avatar: "BS" },
 ];
 
+const stagger = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] as const }
+  }),
+};
+
 export default function Landing() {
   const [plans, setPlans] = useState<any[]>([]);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   useEffect(() => {
-    supabase
-      .from("subscription_plans")
-      .select("*")
-      .order("price")
-      .then(({ data }) => { if (data) setPlans(data); })
-      .catch((err) => console.error("Failed to load plans:", err));
+    const fetchPlans = async () => {
+      const { data, error } = await supabase
+        .from("subscription_plans")
+        .select("*")
+        .order("price");
+      
+      if (error) {
+        console.error("Failed to load plans:", error);
+        return;
+      }
+      
+      if (data) {
+        // Show only 3 plans: Gratis, Basic, Premium (hide Pro)
+        const limited = data.filter((p: any) => p.name !== "Pro");
+        setPlans(limited);
+      }
+    };
+    
+    fetchPlans();
   }, []);
 
   return (
@@ -46,180 +88,158 @@ export default function Landing() {
         canonical="/"
       />
 
-      {/* Floating Pill Nav */}
-      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-        <div className="nav-pill flex items-center gap-1 px-2 py-1.5 rounded-full bg-background/70 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/5">
-          <Link to="/" className="px-4 py-2 font-display text-lg font-bold text-primary tracking-tight">
-            Undangan<span className="text-accent">ku</span>
+      {/* ── NAVBAR ── */}
+      <nav className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
+        <div className="container mx-auto flex items-center justify-between h-14 px-4 md:px-6">
+          <Link to="/" className="font-display text-xl font-bold">
+            <span className={TONE.brown.text}>Undangan</span>
+            <span className={TONE.rose.text}>ku</span>
           </Link>
-          <div className="hidden md:flex items-center gap-0.5 text-sm">
-            <a href="#fitur" className="px-3 py-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all">Fitur</a>
-            <a href="#harga" className="px-3 py-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all">Harga</a>
-            <a href="#testimoni" className="px-3 py-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all">Testimoni</a>
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-1 text-sm">
+            <a href="#fitur" className="px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all">Fitur</a>
+            <a href="#harga" className="px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all">Harga</a>
+            <a href="#testimoni" className="px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all">Testimoni</a>
           </div>
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-2">
             <Link to="/auth">
-              <Button variant="ghost" size="sm" className="rounded-full text-xs">Masuk</Button>
+              <Button variant="ghost" size="sm" className="text-xs md:text-sm">Masuk</Button>
             </Link>
             <Link to="/auth?tab=signup">
-              <Button size="sm" className="rounded-full text-xs px-4">
-                Daftar <ArrowRight className="w-3 h-3 ml-1" />
+              <Button size="sm" className={`text-xs md:text-sm px-4 rounded-full ${TONE.brown.bg} hover:opacity-90`}>
+                Daftar
               </Button>
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero — Asymmetric Split Layout */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center pt-20">
-        {/* Organic blob decorations */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="blob blob-1" />
-          <div className="blob blob-2" />
-          <div className="blob blob-3" />
-          {/* Grid pattern overlay */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        </div>
-
-        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="container mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-12 gap-8 items-center min-h-[80vh]">
+      {/* ── HERO ── */}
+      <section className="pt-20 pb-12 md:pt-28 md:pb-16 px-4 md:px-6">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left: Copy */}
-            <div className="lg:col-span-7 space-y-8">
-              <motion.div
-                initial={{ opacity: 0, x: -40 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className="space-y-6"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-sm">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-primary font-medium">Platform Undangan Digital #1</span>
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-5"
+            >
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-[1.05] tracking-tight">
+                Buat Undangan
+                <br />
+                <span className={TONE.brown.text}>Digital</span> yang
+                <br />
+                <span className={TONE.rose.text}>Memukau</span>
+              </h1>
+
+              <p className="text-base md:text-lg text-muted-foreground max-w-md leading-relaxed">
+                Undangan pernikahan, ulang tahun, dan acara spesial dengan template premium, link personal untuk setiap tamu, dan fitur RSVP lengkap.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                <Link to="/auth?tab=signup">
+                  <Button size="lg" className={`gap-2 text-base px-7 h-12 rounded-full ${TONE.brown.bg} hover:opacity-90 shadow-lg glow-btn`}>
+                    Mulai Gratis <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Link to="/demo">
+                  <Button variant="outline" size="lg" className="text-base px-7 h-12 rounded-full border-2">
+                    Lihat Demo
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Social proof */}
+              <div className="flex items-center gap-3 pt-2">
+                <div className="flex -space-x-2">
+                  {["RA", "DK", "BS", "MF"].map((initials, i) => (
+                    <div key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 border-background ${
+                      i === 0 ? TONE.brown.bg : i === 1 ? TONE.rose.bg : i === 2 ? TONE.gold.bg : TONE.brown.bg
+                    }`}>
+                      {initials}
+                    </div>
+                  ))}
                 </div>
-
-                <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-display font-bold leading-[0.95] tracking-tight">
-                  Undangan
-                  <br />
-                  <span className="relative inline-block">
-                    <span className="text-gradient-modern">Digital</span>
-                    <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
-                      <path d="M2 8C50 2 100 2 150 6C200 10 250 4 298 8" stroke="hsl(var(--accent))" strokeWidth="3" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                  <br />
-                  <span className="text-muted-foreground/70 text-4xl md:text-5xl lg:text-6xl font-light">yang Memukau.</span>
-                </h1>
-
-                <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                  Buat undangan pernikahan, ulang tahun, dan acara spesial dengan template premium, link personal untuk setiap tamu, dan fitur RSVP lengkap.
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">2,000+</span> undangan dibuat
                 </p>
+              </div>
+            </motion.div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Link to="/auth?tab=signup">
-                    <Button size="lg" className="gap-2 text-base px-8 rounded-full h-12 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow">
-                      Mulai Gratis <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                  <Link to="/demo">
-                    <Button variant="outline" size="lg" className="text-base px-8 rounded-full h-12 border-2">
-                      Lihat Demo
-                    </Button>
-                  </Link>
-                </div>
-
-                {/* Social proof strip */}
-                <div className="flex items-center gap-4 pt-4">
-                  <div className="flex -space-x-2">
-                    {["RA", "DK", "BS", "MF"].map((initials, i) => (
-                      <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-[10px] font-bold text-white border-2 border-background">
-                        {initials}
-                      </div>
-                    ))}
+            {/* Right: Decorative card */}
+            <motion.div
+              initial={{ opacity: 0, x: 40, rotate: 2 }}
+              animate={{ opacity: 1, x: 0, rotate: 0 }}
+              transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="relative hidden md:flex justify-center"
+            >
+              {/* Card */}
+              <div className="relative w-72 lg:w-80 h-[22rem] rounded-3xl bg-card border border-border/50 shadow-2xl shadow-black/8 p-7 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className={`w-9 h-9 rounded-xl ${TONE.rose.bgSoft} flex items-center justify-center`}>
+                      <Heart className={`w-4 h-4 ${TONE.rose.text}`} />
+                    </div>
+                    <span className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">Wedding</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">2,000+</span> undangan dibuat bulan ini
+                  <h3 className="font-display text-2xl font-bold leading-tight mb-1">Rina & Adi</h3>
+                  <p className="text-sm text-muted-foreground">Sabtu, 15 Maret 2026</p>
+                  <p className="text-sm text-muted-foreground">Bali, Indonesia</p>
+                </div>
+                <div className="space-y-3">
+                  <div className={`h-28 rounded-2xl ${TONE.brown.bgSoft} border border-border/30 flex items-center justify-center`}>
+                    <MapPin className={`w-7 h-7 ${TONE.brown.text} opacity-40`} />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="font-mono">01 : 23 : 45 : 12</span>
+                    <span className="flex items-center gap-1"><Music className="w-3 h-3" /> Playing</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating RSVP badge */}
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                className={`absolute -right-2 top-10 bg-card border border-border/40 rounded-xl px-3 py-2 shadow-lg`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-green-50 flex items-center justify-center">
+                    <Check className="w-3.5 h-3.5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold">RSVP Masuk!</p>
+                    <p className="text-[9px] text-muted-foreground">Budi + 2 orang</p>
                   </div>
                 </div>
               </motion.div>
-            </div>
 
-            {/* Right: Decorative card stack */}
-            <motion.div
-              initial={{ opacity: 0, x: 60, rotate: 3 }}
-              animate={{ opacity: 1, x: 0, rotate: 0 }}
-              transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:col-span-5 hidden lg:block"
-            >
-              <div className="relative">
-                {/* Background card */}
-                <div className="absolute top-8 -left-6 w-72 h-96 rounded-3xl bg-gradient-to-br from-accent/20 to-primary/10 border border-accent/20 rotate-[-6deg]" />
-                {/* Main card */}
-                <div className="relative z-10 w-80 h-[28rem] rounded-3xl bg-card border border-border/60 shadow-2xl shadow-black/10 p-8 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-6">
-                      <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <Heart className="w-5 h-5 text-primary" />
-                      </div>
-                      <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Wedding Template</span>
-                    </div>
-                    <h3 className="font-display text-3xl font-bold leading-tight mb-2">
-                      Rina & Adi
-                    </h3>
-                    <p className="text-sm text-muted-foreground">Sabtu, 15 Maret 2026</p>
-                    <p className="text-sm text-muted-foreground">Bali, Indonesia</p>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-32 rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border border-border/40 flex items-center justify-center">
-                      <MapPin className="w-8 h-8 text-primary/40" />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-mono">01 : 23 : 45 : 12</span>
-                      <span className="flex items-center gap-1"><Music className="w-3 h-3" /> Now Playing</span>
-                    </div>
-                  </div>
+              {/* Floating guest count */}
+              <motion.div
+                animate={{ y: [0, 5, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+                className="absolute -left-4 bottom-16 bg-card border border-border/40 rounded-xl px-3 py-2 shadow-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className={`w-4 h-4 ${TONE.rose.text}`} />
+                  <span className="text-sm font-bold">127</span>
+                  <span className="text-[10px] text-muted-foreground">tamu</span>
                 </div>
-                {/* Floating badge */}
-                <motion.div
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -right-4 top-12 z-20 bg-card border border-border/50 rounded-2xl px-4 py-3 shadow-xl shadow-black/5"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold">RSVP Masuk!</p>
-                      <p className="text-[10px] text-muted-foreground">Budi + 2 orang</p>
-                    </div>
-                  </div>
-                </motion.div>
-                {/* Floating counter badge */}
-                <motion.div
-                  animate={{ y: [0, 6, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  className="absolute -left-8 bottom-20 z-20 bg-card border border-border/50 rounded-2xl px-4 py-3 shadow-xl shadow-black/5"
-                >
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-accent" />
-                    <span className="text-sm font-bold">127</span>
-                    <span className="text-xs text-muted-foreground">tamu</span>
-                  </div>
-                </motion.div>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* Marquee strip */}
-      <div className="py-4 bg-primary text-primary-foreground overflow-hidden">
-        <div className="marquee-track flex items-center gap-8 whitespace-nowrap">
-          {Array(3).fill(null).map((_, groupIdx) => (
-            <div key={groupIdx} className="flex items-center gap-8 shrink-0">
+      {/* ── MARQUEE ── */}
+      <div className={`py-3 ${TONE.brown.bg} text-white overflow-hidden`}>
+        <div className="marquee-track flex items-center gap-6 whitespace-nowrap">
+          {Array(3).fill(null).map((_, g) => (
+            <div key={g} className="flex items-center gap-6 shrink-0">
               {["Pernikahan", "Ulang Tahun", "Baby Shower", "Khitanan", "Graduation", "Gathering", "Anniversary", "Grand Opening"].map((item) => (
-                <span key={item} className="flex items-center gap-3 text-sm font-medium tracking-wide uppercase">
-                  <Star className="w-3 h-3" />
-                  {item}
+                <span key={item} className="flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+                  <Star className="w-2.5 h-2.5" /> {item}
                 </span>
               ))}
             </div>
@@ -227,176 +247,154 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Features — Bento Grid */}
-      <section id="fitur" className="py-24 px-6">
+      {/* ── FEATURES ── */}
+      <section id="fitur" className="py-14 md:py-20 px-4 md:px-6">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            className="mb-16 max-w-xl"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            className="mb-10 md:mb-12"
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            variants={stagger}
+            custom={0}
           >
-            <span className="text-xs font-mono text-accent uppercase tracking-[0.2em] mb-3 block">— Fitur Unggulan</span>
-            <h2 className="text-4xl md:text-5xl font-display font-bold leading-tight mb-4">
-              Semua yang kamu
-              <br />butuhkan, <span className="text-gradient-modern">dalam satu platform</span>
+            <span className={`text-[11px] font-mono ${TONE.rose.text} uppercase tracking-[0.2em] mb-2 block`}>— Fitur Unggulan</span>
+            <h2 className="text-3xl md:text-4xl font-display font-bold leading-tight">
+              Semua yang kamu butuhkan
             </h2>
-            <p className="text-muted-foreground text-lg">
-              Tidak perlu tools terpisah. Semua fitur terintegrasi untuk membuat undangan yang sempurna.
+            <p className="text-muted-foreground text-sm md:text-base mt-2 max-w-md">
+              Tidak perlu tools terpisah. Semua fitur terintegrasi dalam satu platform.
             </p>
           </motion.div>
 
-          <div className="bento-grid grid grid-cols-1 md:grid-cols-3 gap-4">
-            {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                className={
-                  f.size === "large" ? "md:col-span-2 md:row-span-2" :
-                  f.size === "tall" ? "md:col-span-1 md:row-span-2" :
-                  "md:col-span-1"
-                }
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-              >
-                <Card className="h-full border-border/40 bg-card/80 backdrop-blur-sm hover:bg-card hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 group overflow-hidden relative">
-                  {/* Subtle gradient on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <CardContent className="p-6 md:p-8 relative z-10 flex flex-col h-full">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-all duration-500 group-hover:scale-110 ${
-                      f.size === "large" ? "bg-gradient-to-br from-primary to-accent text-white" :
-                      f.size === "tall" ? "bg-accent/10 text-accent" :
-                      "bg-primary/8 text-primary"
-                    }`}>
-                      <f.icon className={f.size === "large" ? "w-7 h-7" : "w-6 h-6"} />
-                    </div>
-                    <h3 className={`font-display font-bold mb-2 ${f.size === "large" ? "text-2xl md:text-3xl" : "text-xl"}`}>{f.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed flex-1">{f.desc}</p>
-                    {f.size === "large" && (
-                      <div className="mt-6 grid grid-cols-3 gap-3">
-                        {["Classic", "Modern", "Floral"].map((tmpl) => (
-                          <div key={tmpl} className="h-24 rounded-xl bg-gradient-to-br from-secondary/60 to-secondary/30 border border-border/30 flex items-end p-2">
-                            <span className="text-[10px] font-medium text-muted-foreground">{tmpl}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works — Step cards */}
-      <section className="py-24 px-6 bg-secondary/30 relative">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.015)_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <div className="container mx-auto max-w-5xl relative z-10">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <span className="text-xs font-mono text-accent uppercase tracking-[0.2em] mb-3 block">— Cara Kerja</span>
-            <h2 className="text-4xl md:text-5xl font-display font-bold">
-              3 Langkah Mudah
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-6 relative">
-            {/* Connector line */}
-            <div className="hidden md:block absolute top-20 left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-            {[
-              { step: "01", title: "Pilih Template", desc: "Pilih dari koleksi template premium kami yang dirancang untuk berbagai acara.", icon: Sparkles },
-              { step: "02", title: "Personalisasi", desc: "Tambahkan detail acara, foto, musik, dan peta lokasi sesuai keinginanmu.", icon: Zap },
-              { step: "03", title: "Bagikan", desc: "Kirim link personal ke setiap tamu atau bagikan via QR code.", icon: Users },
-            ].map((s, i) => (
-              <motion.div
-                key={s.step}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15, duration: 0.5 }}
-                className="text-center"
-              >
-                <div className="relative inline-flex mb-6">
-                  <div className="w-16 h-16 rounded-2xl bg-card border border-border/50 flex items-center justify-center shadow-lg">
-                    <s.icon className="w-7 h-7 text-primary" />
-                  </div>
-                  <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center">
-                    {s.step}
-                  </span>
-                </div>
-                <h3 className="font-display text-xl font-bold mb-2">{s.title}</h3>
-                <p className="text-muted-foreground text-sm max-w-xs mx-auto">{s.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing — Horizontal Cards */}
-      <section id="harga" className="py-24 px-6">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <div>
-              <span className="text-xs font-mono text-accent uppercase tracking-[0.2em] mb-3 block">— Harga</span>
-              <h2 className="text-4xl md:text-5xl font-display font-bold">
-                Pilih paket
-                <br />yang <span className="text-gradient-modern">tepat untukmu</span>
-              </h2>
-            </div>
-            <p className="text-muted-foreground text-sm max-w-xs">
-              Mulai gratis, upgrade kapan saja sesuai kebutuhan acara kamu.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-5">
-            {plans.map((plan, i) => {
-              const isPopular = i === 1;
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            {features.map((f, i) => {
+              const tone = TONE[f.tone];
               return (
                 <motion.div
-                  key={plan.id}
-                  initial={{ opacity: 0, y: 30 }}
+                  key={f.title}
+                  variants={stagger}
+                  custom={i + 1}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                >
+                  <Card className="tilt-card h-full border-border/30 hover:border-[hsl(var(--border))] group">
+                    <CardContent className="p-5 md:p-6 flex flex-col gap-3">
+                      <div className={`w-11 h-11 rounded-xl ${tone.bgSoft} flex items-center justify-center transition-transform group-hover:scale-110`}>
+                        <f.icon className={`w-5 h-5 ${tone.text}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-lg font-bold mb-1">{f.title}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section className={`py-14 md:py-18 px-4 md:px-6 ${TONE.gold.bgSoft}`}>
+        <div className="container mx-auto max-w-5xl">
+          <motion.div
+            className="text-center mb-10"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className={`text-[11px] font-mono ${TONE.gold.text} uppercase tracking-[0.2em] mb-2 block`}>— Cara Kerja</span>
+            <h2 className="text-3xl md:text-4xl font-display font-bold">3 Langkah Mudah</h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+            {[
+              { step: "01", title: "Pilih Template", desc: "Pilih dari koleksi template premium kami untuk berbagai jenis acara.", icon: Sparkles, tone: "brown" as const },
+              { step: "02", title: "Personalisasi", desc: "Tambahkan detail acara, foto, musik, dan peta lokasi.", icon: Zap, tone: "rose" as const },
+              { step: "03", title: "Bagikan", desc: "Kirim link personal ke setiap tamu atau via QR code.", icon: Gift, tone: "gold" as const },
+            ].map((s, i) => {
+              const tone = TONE[s.tone];
+              return (
+                <motion.div
+                  key={s.step}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.12, duration: 0.5 }}
+                  className="text-center"
                 >
-                  <Card className={`relative h-full overflow-hidden transition-all duration-500 hover:shadow-2xl ${
-                    isPopular
-                      ? "border-primary/50 shadow-lg shadow-primary/10 bg-gradient-to-b from-primary/5 to-card"
-                      : "border-border/40 hover:border-primary/20"
+                  <div className="relative inline-flex mb-4">
+                    <div className={`w-14 h-14 rounded-2xl ${tone.bgSoft} flex items-center justify-center`}>
+                      <s.icon className={`w-6 h-6 ${tone.text}`} />
+                    </div>
+                    <span className={`absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full ${tone.bg} text-white text-[10px] font-bold flex items-center justify-center`}>
+                      {s.step}
+                    </span>
+                  </div>
+                  <h3 className="font-display text-lg font-bold mb-1.5">{s.title}</h3>
+                  <p className="text-sm text-muted-foreground max-w-[240px] mx-auto">{s.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ── */}
+      <section id="harga" className="py-14 md:py-20 px-4 md:px-6">
+        <div className="container mx-auto max-w-4xl">
+          <motion.div
+            className="text-center mb-10"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className={`text-[11px] font-mono ${TONE.brown.text} uppercase tracking-[0.2em] mb-2 block`}>— Harga</span>
+            <h2 className="text-3xl md:text-4xl font-display font-bold">Pilih paket yang tepat</h2>
+            <p className="text-muted-foreground text-sm mt-2">Mulai gratis, upgrade kapan saja.</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+            {plans.map((plan, i) => {
+              const isPopular = i === 1;
+              // Assign tone to each plan
+              const toneKey = (["brown", "rose", "gold"] as const)[i] || "brown";
+              const tone = TONE[toneKey];
+
+              return (
+                <motion.div
+                  key={plan.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                >
+                  <Card className={`tilt-card relative h-full overflow-hidden ${
+                    isPopular ? `ring-2 ${tone.ring} shadow-lg` : "border-border/30"
                   }`}>
                     {isPopular && (
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+                      <div className={`absolute top-0 left-0 right-0 h-1 ${tone.bg}`} />
                     )}
-                    <CardContent className="p-7">
-                      <div className="flex items-center justify-between mb-5">
-                        <h3 className="font-display text-xl font-bold">{plan.name}</h3>
+                    <CardContent className="p-5 md:p-6 flex flex-col">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-display text-lg font-bold">{plan.name}</h3>
                         {isPopular && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-3 py-1 rounded-full">
+                          <span className={`text-[9px] font-bold uppercase tracking-wider ${tone.bg} text-white px-2.5 py-0.5 rounded-full`}>
                             Populer
                           </span>
                         )}
                       </div>
-                      <p className="text-muted-foreground text-sm mb-5 min-h-[2.5rem]">{plan.description}</p>
-                      <div className="mb-6">
-                        <span className="text-4xl font-bold tracking-tight">
+                      <p className="text-xs text-muted-foreground mb-4 min-h-[2rem]">{plan.description}</p>
+                      <div className="mb-4">
+                        <span className="text-3xl font-bold tracking-tight">
                           {plan.price === 0 ? "Gratis" : `Rp ${plan.price.toLocaleString("id-ID")}`}
                         </span>
-                        {plan.price > 0 && <span className="text-muted-foreground text-sm ml-1">/bulan</span>}
+                        {plan.price > 0 && <span className="text-muted-foreground text-xs ml-1">/bulan</span>}
                       </div>
-                      <ul className="space-y-3 mb-7">
+                      <ul className="space-y-2.5 mb-5 flex-1">
                         {(() => {
                           const feats = plan.features;
                           if (!feats) return null;
@@ -410,9 +408,9 @@ export default function Landing() {
                                 })
                               : [];
                           return items.map((f) => (
-                            <li key={f} className="flex items-start gap-2.5 text-sm">
-                              <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                                <Check className="w-3 h-3 text-primary" />
+                            <li key={f} className="flex items-start gap-2 text-sm">
+                              <div className={`w-4 h-4 rounded-full ${tone.bgSoft} flex items-center justify-center shrink-0 mt-0.5`}>
+                                <Check className={`w-2.5 h-2.5 ${tone.text}`} />
                               </div>
                               <span>{f}</span>
                             </li>
@@ -420,8 +418,8 @@ export default function Landing() {
                         })()}
                       </ul>
                       <Link to="/auth?tab=signup">
-                        <Button className="w-full rounded-full" variant={isPopular ? "default" : "outline"} size="lg">
-                          {plan.price === 0 ? "Mulai Gratis" : "Langganan"} <ChevronRight className="w-4 h-4 ml-1" />
+                        <Button className={`w-full rounded-full ${isPopular ? `${tone.bg} hover:opacity-90 glow-btn` : ""}`} variant={isPopular ? "default" : "outline"} size="sm">
+                          {plan.price === 0 ? "Mulai Gratis" : "Langganan"} <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                         </Button>
                       </Link>
                     </CardContent>
@@ -433,45 +431,43 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimoni" className="py-24 px-6 bg-secondary/20">
+      {/* ── TESTIMONIALS ── */}
+      <section id="testimoni" className={`py-14 md:py-18 px-4 md:px-6 ${TONE.rose.bgSoft}`}>
         <div className="container mx-auto max-w-5xl">
           <motion.div
-            className="text-center mb-14"
-            initial={{ opacity: 0, y: 20 }}
+            className="text-center mb-10"
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <span className="text-xs font-mono text-accent uppercase tracking-[0.2em] mb-3 block">— Testimoni</span>
-            <h2 className="text-4xl md:text-5xl font-display font-bold">
-              Apa kata mereka?
-            </h2>
+            <span className={`text-[11px] font-mono ${TONE.rose.text} uppercase tracking-[0.2em] mb-2 block`}>— Testimoni</span>
+            <h2 className="text-3xl md:text-4xl font-display font-bold">Apa kata mereka?</h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {testimonials.map((t, i) => (
               <motion.div
                 key={t.name}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.1, duration: 0.45 }}
               >
-                <Card className="h-full border-border/30 hover:border-primary/20 hover:shadow-lg transition-all duration-500">
-                  <CardContent className="p-6 flex flex-col h-full">
-                    <div className="flex gap-1 mb-4">
+                <Card className="tilt-card h-full border-border/20">
+                  <CardContent className="p-5 flex flex-col">
+                    <div className="flex gap-0.5 mb-3">
                       {Array(5).fill(null).map((_, s) => (
-                        <Star key={s} className="w-4 h-4 fill-gold text-gold" />
+                        <Star key={s} className={`w-3.5 h-3.5 fill-current ${TONE.gold.text}`} />
                       ))}
                     </div>
-                    <p className="text-sm leading-relaxed flex-1 mb-5">"{t.text}"</p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-bold text-white">
+                    <p className="text-sm leading-relaxed flex-1 mb-4">"{t.text}"</p>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-9 h-9 rounded-full ${TONE.brown.bg} flex items-center justify-center text-[10px] font-bold text-white`}>
                         {t.avatar}
                       </div>
                       <div>
                         <p className="text-sm font-semibold">{t.name}</p>
-                        <p className="text-xs text-muted-foreground">{t.role}</p>
+                        <p className="text-[11px] text-muted-foreground">{t.role}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -482,72 +478,75 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-6">
-        <div className="container mx-auto max-w-3xl">
+      {/* ── CTA ── */}
+      <section className="py-14 md:py-20 px-4 md:px-6">
+        <div className="container mx-auto max-w-2xl">
           <motion.div
-            className="relative rounded-3xl overflow-hidden p-12 md:p-16 text-center"
-            initial={{ opacity: 0, scale: 0.95 }}
+            className={`rounded-2xl ${TONE.brown.bg} p-8 md:p-12 text-center text-white`}
+            initial={{ opacity: 0, scale: 0.97 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
-            {/* Gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary opacity-90" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_50%)]" />
-
-            <div className="relative z-10 text-white">
-              <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-                Siap buat undangan impianmu?
-              </h2>
-              <p className="text-white/80 text-lg mb-8 max-w-lg mx-auto">
-                Bergabung dengan ribuan pengguna yang sudah membuat undangan digital memukau.
-              </p>
-              <Link to="/auth?tab=signup">
-                <Button size="lg" variant="secondary" className="rounded-full px-10 h-12 text-base font-semibold shadow-xl">
-                  Mulai Sekarang — Gratis <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
+            <h2 className="text-2xl md:text-4xl font-display font-bold mb-3">
+              Siap buat undangan impianmu?
+            </h2>
+            <p className="text-white/80 text-sm md:text-base mb-6 max-w-sm mx-auto">
+              Bergabung dengan ribuan pengguna yang sudah membuat undangan digital memukau.
+            </p>
+            <Link to="/auth?tab=signup">
+              <Button size="lg" variant="secondary" className="rounded-full px-8 h-11 text-sm font-semibold shadow-xl glow-btn">
+                Mulai Sekarang — Gratis <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-16 px-6 border-t border-border/40">
+      {/* ── FOOTER ── */}
+      <footer className="py-10 px-4 md:px-6 border-t border-border/30">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            <div className="md:col-span-2">
-              <Link to="/" className="font-display text-2xl font-bold text-primary inline-block mb-3">
-                Undangan<span className="text-accent">ku</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <div className="col-span-2 md:col-span-1">
+              <Link to="/" className="font-display text-xl font-bold inline-block mb-2">
+                <span className={TONE.brown.text}>Undangan</span>
+                <span className={TONE.rose.text}>ku</span>
               </Link>
-              <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
-                Platform undangan digital terdepan di Indonesia. Buat undangan yang memukau dengan mudah.
+              <p className="text-muted-foreground text-xs leading-relaxed max-w-[200px]">
+                Platform undangan digital terdepan di Indonesia.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-3">Produk</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h4 className="font-semibold text-xs mb-2.5">Produk</h4>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li><a href="#fitur" className="hover:text-foreground transition-colors">Fitur</a></li>
                 <li><a href="#harga" className="hover:text-foreground transition-colors">Harga</a></li>
                 <li><Link to="/demo" className="hover:text-foreground transition-colors">Demo</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-3">Akun</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h4 className="font-semibold text-xs mb-2.5">Akun</h4>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li><Link to="/auth" className="hover:text-foreground transition-colors">Masuk</Link></li>
                 <li><Link to="/auth?tab=signup" className="hover:text-foreground transition-colors">Daftar</Link></li>
                 <li><Link to="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link></li>
               </ul>
             </div>
+            <div>
+              <h4 className="font-semibold text-xs mb-2.5">Kontak</h4>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li>info@undanganku.id</li>
+                <li>WhatsApp</li>
+                <li>Instagram</li>
+              </ul>
+            </div>
           </div>
-          <div className="pt-8 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-muted-foreground">
+          <div className="pt-6 border-t border-border/20 flex flex-col md:flex-row items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground">
               © 2026 Undanganku. Hak cipta dilindungi.
             </p>
-            <p className="text-xs text-muted-foreground">
-              Dibuat dengan <Heart className="w-3 h-3 inline text-accent" /> di Indonesia
+            <p className="text-[11px] text-muted-foreground">
+              Dibuat dengan <Heart className={`w-3 h-3 inline ${TONE.rose.text}`} /> di Indonesia
             </p>
           </div>
         </div>

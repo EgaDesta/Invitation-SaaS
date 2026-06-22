@@ -6,74 +6,89 @@
 
 @layer base {
   :root {
-    --background: 30 25% 97%;
-    --foreground: 20 20% 12%;
+    /* 3-tone palette: warm brown, rose pink, gold */
+    --tone-brown: 25 55% 38%;
+    --tone-brown-soft: 25 30% 92%;
+    --tone-rose: 345 50% 52%;
+    --tone-rose-soft: 345 40% 94%;
+    --tone-gold: 40 75% 50%;
+    --tone-gold-soft: 40 50% 93%;
 
-    --card: 30 20% 99%;
-    --card-foreground: 20 20% 12%;
+    --background: 35 20% 98%;
+    --foreground: 20 15% 10%;
 
-    --popover: 30 20% 99%;
-    --popover-foreground: 20 20% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 15% 10%;
 
-    --primary: 25 60% 45%;
-    --primary-foreground: 30 25% 97%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 15% 10%;
 
-    --secondary: 30 15% 92%;
-    --secondary-foreground: 20 20% 20%;
+    --primary: 25 55% 38%;
+    --primary-foreground: 0 0% 100%;
 
-    --muted: 30 12% 94%;
-    --muted-foreground: 20 10% 50%;
+    --secondary: 30 15% 94%;
+    --secondary-foreground: 20 15% 18%;
 
-    --accent: 340 45% 55%;
+    --muted: 30 10% 95%;
+    --muted-foreground: 20 8% 48%;
+
+    --accent: 345 50% 52%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 88%;
-    --input: 30 15% 88%;
-    --ring: 25 60% 45%;
+    --border: 30 12% 90%;
+    --input: 30 12% 90%;
+    --ring: 25 55% 38%;
 
     --radius: 0.75rem;
 
-    --gold: 42 80% 55%;
-    --gold-foreground: 20 20% 12%;
-    --rose: 340 45% 55%;
+    --gold: 40 75% 50%;
+    --gold-foreground: 20 15% 10%;
+    --rose: 345 50% 52%;
     --rose-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 20 20% 8%;
-    --foreground: 30 15% 92%;
+    --tone-brown: 28 50% 55%;
+    --tone-brown-soft: 28 25% 18%;
+    --tone-rose: 345 45% 55%;
+    --tone-rose-soft: 345 30% 16%;
+    --tone-gold: 40 65% 52%;
+    --tone-gold-soft: 40 30% 16%;
 
-    --card: 20 18% 12%;
-    --card-foreground: 30 15% 92%;
+    --background: 20 15% 7%;
+    --foreground: 30 10% 92%;
 
-    --popover: 20 18% 12%;
-    --popover-foreground: 30 15% 92%;
+    --card: 20 12% 10%;
+    --card-foreground: 30 10% 92%;
 
-    --primary: 30 55% 55%;
-    --primary-foreground: 20 20% 8%;
+    --popover: 20 12% 10%;
+    --popover-foreground: 30 10% 92%;
 
-    --secondary: 20 15% 18%;
-    --secondary-foreground: 30 15% 88%;
+    --primary: 28 50% 55%;
+    --primary-foreground: 20 15% 7%;
 
-    --muted: 20 12% 18%;
-    --muted-foreground: 30 10% 55%;
+    --secondary: 20 10% 15%;
+    --secondary-foreground: 30 10% 88%;
 
-    --accent: 340 40% 50%;
+    --muted: 20 8% 16%;
+    --muted-foreground: 30 8% 52%;
+
+    --accent: 345 45% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 20 12% 22%;
-    --input: 20 12% 22%;
-    --ring: 30 55% 55%;
+    --border: 20 10% 20%;
+    --input: 20 10% 20%;
+    --ring: 28 50% 55%;
 
-    --gold: 42 70% 50%;
-    --gold-foreground: 20 20% 8%;
-    --rose: 340 40% 50%;
+    --gold: 40 65% 52%;
+    --gold-foreground: 20 15% 7%;
+    --rose: 345 45% 55%;
     --rose-foreground: 0 0% 100%;
   }
 }
@@ -104,85 +119,76 @@
   .font-mono {
     font-family: "JetBrains Mono", monospace;
   }
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary;
-  }
-  .text-gradient-modern {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--gold)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
 }
 
-/* ── Organic Blob Decorations ── */
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.4;
-  animation: blobFloat 20s ease-in-out infinite;
-}
-.blob-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, hsl(var(--primary) / 0.25), transparent 70%);
-  top: -10%;
-  right: -5%;
-  animation-delay: 0s;
-}
-.blob-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, hsl(var(--accent) / 0.2), transparent 70%);
-  bottom: 10%;
-  left: -10%;
-  animation-delay: -7s;
-}
-.blob-3 {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, hsl(var(--gold) / 0.2), transparent 70%);
-  top: 40%;
-  left: 30%;
-  animation-delay: -14s;
-}
-@keyframes blobFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -40px) scale(1.05); }
-  66% { transform: translate(-20px, 20px) scale(0.95); }
+/* ══════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════ */
+
+/* Stagger reveal */
+@keyframes slideReveal {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Nav Pill ── */
-.nav-pill {
-  transition: all 0.3s ease;
-}
-.nav-pill:hover {
-  border-color: hsl(var(--primary) / 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+/* Pulse glow on accent elements */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--tone-rose) / 0); }
+  50% { box-shadow: 0 0 20px 4px hsl(var(--tone-rose) / 0.25); }
 }
 
-/* ── Marquee ── */
-.marquee-track {
-  animation: marquee 30s linear infinite;
+/* Bounce badge */
+@keyframes bounceBadge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
+
+/* Shimmer for CTA */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Marquee */
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-33.333%); }
 }
-
-/* ── Bento Grid Hover Effects ── */
-.bento-grid .group {
-  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+.marquee-track {
+  animation: marquee 25s linear infinite;
 }
 
-/* ── Custom Scrollbar ── */
-::-webkit-scrollbar {
-  width: 6px;
+/* Card tilt on hover */
+.tilt-card {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+.tilt-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.08);
 }
+
+/* Glow CTA button */
+.glow-btn {
+  position: relative;
+  overflow: hidden;
+}
+.glow-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.15),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
   border-radius: 3px;
@@ -191,8 +197,8 @@
   background: hsl(var(--muted-foreground));
 }
 
-/* ── Selection Color ── */
+/* Selection */
 ::selection {
-  background: hsl(var(--primary) / 0.2);
+  background: hsl(var(--tone-gold) / 0.25);
   color: hsl(var(--foreground));
 }
