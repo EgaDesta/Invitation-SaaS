@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Music, Pause, Play, MapPin, Calendar, Clock, Heart, Send, MessageCircle, Sparkles, Gift, Star } from "lucide-react";
 import SEO from "@/components/SEO";
 import { CustomDesignData, isCustomDesign, getEntranceVariants, getAnimationDuration, getRadiusClass, getSpacingClass, FONT_OPTIONS } from "@/lib/customDesignTypes";
+import { toast } from "sonner";
 
 export default function InvitationView() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, token } = useParams<{ slug: string; token?: string }>();
   const [searchParams] = useSearchParams();
   const guestName = decodeURIComponent(searchParams.get("to") || "Tamu Undangan");
 
@@ -184,6 +185,39 @@ export default function InvitationView() {
 
   const handleRsvp = async () => {
     if (!invitation || !rsvpName.trim()) return;
+    
+    // === P0-2: RSVP TOKEN VALIDATION (FIX) ===
+    // Jika ada token, harus validasi dengan token dulu (owner access)
+    if (token) {
+      const { data: guest } = await supabase.from("guests")
+        .select("*")
+        .eq("invitation_id", invitation.id)
+        .eq("unique_token", token)
+        .maybeSingle();
+      
+      if (!guest) {
+        toast.error("Token tidak valid atau sudah dipakai");
+        return;
+      }
+      
+      // Update existing guest dengan token
+      await supabase.from("guests").update({
+        rsvp_status: rsvpStatus,
+        rsvp_message: rsvpMessage || null,
+        rsvp_guests_count: rsvpCount,
+      }).eq("id", guest.id);
+      
+      setRsvpSubmitted(true);
+      const { data } = await supabase.from("guests")
+        .select("name, rsvp_message, rsvp_status, created_at")
+        .eq("invitation_id", invitation.id)
+        .not("rsvp_message", "is", null)
+        .order("created_at", { ascending: false });
+      if (data) setWishes(data);
+      return;
+    }
+    
+    // Tanpa token: name-based matching (public RSVP)
     const { data: existingGuest } = await supabase.from("guests")
       .select("*").eq("invitation_id", invitation.id).eq("name", rsvpName.trim()).maybeSingle();
 

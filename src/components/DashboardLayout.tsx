@@ -1,7 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, PlusCircle, FileText, CreditCard, Settings, LogOut,
   Users, BarChart3, Layers, DollarSign, Menu, X, Moon, Sun,

@@ -106,6 +106,36 @@ export default function CreateInvitation() {
     if (!user) return;
     setLoading(true);
 
+    // === P0-1: QUOTA ENFORCEMENT (FIX) ===
+    const weekStart = getWeekStart();
+    
+    // Cek subscription dan quota
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("*, subscription_plans(weekly_quota)")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+    
+    const currentQuota = subscription?.subscription_plans?.weekly_quota || 0;
+    
+    // Cek usage minggu ini
+    const { data: usage } = await supabase
+      .from("usage_logs")
+      .select("invitation_count")
+      .eq("user_id", user.id)
+      .eq("week_start", weekStart)
+      .maybeSingle();
+    
+    const currentUsage = usage?.invitation_count || 0;
+    
+    // Reject jika quota habis
+    if (currentUsage >= currentQuota) {
+      toast.error(`Quota minggu ini habis! Limit: ${currentQuota} undangan. Upgrade plan untuk membuat lebih.`);
+      setLoading(false);
+      return;
+    }
+    
     const slug = generateSlug();
     const dbTemplate = templates.find((t) => t.id === form.template_id);
 
@@ -134,14 +164,13 @@ export default function CreateInvitation() {
     if (error) {
       toast.error(error.message);
     } else {
-      const weekStart = getWeekStart();
-      const { data: existing } = await supabase.from("usage_logs").select("*").eq("user_id", user.id).eq("week_start", weekStart).maybeSingle();
-      if (existing) {
-        await supabase.from("usage_logs").update({ invitation_count: existing.invitation_count + 1 }).eq("id", existing.id);
+      // Update usage log setelah berhasil
+      if (usage) {
+        await supabase.from("usage_logs").update({ invitation_count: usage.invitation_count + 1 }).eq("id", usage.id);
       } else {
         await supabase.from("usage_logs").insert({ user_id: user.id, week_start: weekStart, invitation_count: 1 });
       }
-      toast.success("Undangan berhasil dibuat!");
+      toast.success(`Undangan berhasil dibuat! Sisa quota: ${currentQuota - currentUsage - 1}`);
       navigate("/dashboard/invitations");
     }
     setLoading(false);
