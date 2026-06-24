@@ -15,6 +15,7 @@ import InvitationPreview from "@/components/InvitationPreview";
 import TemplateBuilder from "@/components/TemplateBuilder";
 import { TEMPLATE_CONFIGS } from "@/lib/templates";
 import { DEFAULT_CUSTOM_DESIGN, CustomDesignData } from "@/lib/customDesignTypes";
+import { getWeekStart, isValidMapEmbedUrl } from "@/lib/utils";
 import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout } from "lucide-react";
 
 const steps = ["Template", "Detail Acara", "Media", "Preview"];
@@ -105,6 +106,12 @@ export default function CreateInvitation() {
   const handleSubmit = async () => {
     if (!user) return;
     setLoading(true);
+
+    if (form.map_embed_url && !isValidMapEmbedUrl(form.map_embed_url)) {
+      toast.error("URL Google Maps tidak valid. Gunakan URL embed dari Google Maps.");
+      setLoading(false);
+      return;
+    }
 
     // === P0-1: QUOTA ENFORCEMENT (FIX) ===
     const weekStart = getWeekStart();
@@ -441,10 +448,4 @@ export default function CreateInvitation() {
   );
 }
 
-function getWeekStart() {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  return monday.toISOString().split("T")[0];
-}
+

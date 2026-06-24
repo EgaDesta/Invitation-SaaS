@@ -1,6 +1,7 @@
-import { Heart, Calendar, Clock, MapPin, Music, Send, MessageCircle } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
-import { isCustomDesign, FONT_OPTIONS, CustomDesignData } from "@/lib/customDesignTypes";
+import { Heart, Calendar, MapPin, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { isCustomDesign, CustomDesignData } from "@/lib/customDesignTypes";
+import { loadGoogleFonts } from "@/lib/utils";
 
 interface PreviewProps {
   form: {
@@ -46,17 +47,7 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
   useEffect(() => {
     if (!templateData || !isCustomDesign(templateData)) return;
     const cd = templateData as CustomDesignData;
-    const fonts = [cd.fonts.heading, cd.fonts.body];
-    const unique = [...new Set(fonts)];
-    const googleFonts = unique.map((f) => {
-      const opt = FONT_OPTIONS.find((fo) => fo.name === f);
-      return opt ? opt.google : f.replace(/ /g, "+");
-    });
-    const link = document.createElement("link");
-    link.href = `https://fonts.googleapis.com/css2?${googleFonts.map((f) => `family=${f}:wght@300;400;500;600;700;800;900`).join("&")}&display=swap`;
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-    return () => { document.head.removeChild(link); };
+    return loadGoogleFonts([cd.fonts.heading, cd.fonts.body]);
   }, [templateData]);
 
   const custom = isCustomDesign(templateData) ? templateData as CustomDesignData : null;

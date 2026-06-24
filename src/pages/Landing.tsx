@@ -6,6 +6,7 @@ import { Heart, Sparkles, Users, Music, QrCode, MapPin, ArrowRight, Check, Star,
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
+import { parseFeatures } from "@/lib/utils";
 
 /* ── 3-tone palette classes ── */
 const TONE = {
@@ -393,27 +394,14 @@ export default function Landing() {
                         {plan.price > 0 && <span className="text-muted-foreground text-xs ml-1">/bulan</span>}
                       </div>
                       <ul className="space-y-2.5 mb-5 flex-1">
-                        {(() => {
-                          const feats = plan.features;
-                          if (!feats) return null;
-                          const items: string[] = Array.isArray(feats)
-                            ? feats
-                            : typeof feats === "object"
-                              ? Object.entries(feats).map(([k, v]) => {
-                                  if (v === true) return k.replace(/_/g, " ");
-                                  if (Array.isArray(v)) return `${k}: ${v.join(", ")}`;
-                                  return `${k}: ${v}`;
-                                })
-                              : [];
-                          return items.map((f) => (
-                            <li key={f} className="flex items-start gap-2 text-sm">
-                              <div className={`w-4 h-4 rounded-full ${tone.bgSoft} flex items-center justify-center shrink-0 mt-0.5`}>
-                                <Check className={`w-2.5 h-2.5 ${tone.text}`} />
-                              </div>
-                              <span>{f}</span>
-                            </li>
-                          ));
-                        })()}
+                        {parseFeatures(plan.features).map((f) => (
+                          <li key={f} className="flex items-start gap-2 text-sm">
+                            <div className={`w-4 h-4 rounded-full ${tone.bgSoft} flex items-center justify-center shrink-0 mt-0.5`}>
+                              <Check className={`w-2.5 h-2.5 ${tone.text}`} />
+                            </div>
+                            <span>{f}</span>
+                          </li>
+                        ))}
                       </ul>
                       <Link to="/auth?tab=signup">
                         <Button className={`w-full rounded-full ${isPopular ? `${tone.bg} hover:opacity-90 glow-btn` : ""}`} variant={isPopular ? "default" : "outline"} size="sm">

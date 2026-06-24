@@ -12,12 +12,14 @@ ON CONFLICT (name) DO UPDATE SET
   features = EXCLUDED.features,
   is_active = EXCLUDED.is_active;
 
--- Seed admin user (email: admin@undanganku.id)
+-- ⚠️ SECURITY WARNING: Hapus atau ganti seed ini sebelum production!
+-- Admin user (email: admin@undanganku.id)
+-- Password default harus SEGERA diganti setelah first login.
 INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_user_meta_data)
 SELECT
   gen_random_uuid(),
   'admin@undanganku.id',
-  crypt('admin123', gen_salt('bf')),
+  crypt('CHANGE_ME_ADMIN_123!', gen_salt('bf')),
   now(),
   '{"full_name": "Admin UndanganKu"}'
 WHERE NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@undanganku.id');

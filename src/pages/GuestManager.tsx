@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +10,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { QRCodeSVG } from "qrcode.react";
 import { PlusCircle, Trash2, Download, Copy, QrCode } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { sanitizeInput } from "@/lib/utils";
 
 export default function GuestManager() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  useAuth();
   const [guests, setGuests] = useState<any[]>([]);
   const [invitation, setInvitation] = useState<any>(null);
   const [newName, setNewName] = useState("");
@@ -33,14 +34,14 @@ export default function GuestManager() {
 
   const addGuest = async () => {
     if (!newName.trim() || !id) return;
-    const { error } = await supabase.from("guests").insert({ invitation_id: id, name: newName.trim() });
+    const { error } = await supabase.from("guests").insert({ invitation_id: id, name: sanitizeInput(newName) });
     if (error) toast.error(error.message);
     else { setNewName(""); fetchData(); toast.success("Tamu ditambahkan"); }
   };
 
   const addBulkGuests = async () => {
     if (!bulkNames.trim() || !id) return;
-    const names = bulkNames.split("\n").map((n) => n.trim()).filter(Boolean);
+    const names = bulkNames.split("\n").map((n) => sanitizeInput(n)).filter(Boolean);
     const rows = names.map((name) => ({ invitation_id: id, name }));
     const { error } = await supabase.from("guests").insert(rows);
     if (error) toast.error(error.message);

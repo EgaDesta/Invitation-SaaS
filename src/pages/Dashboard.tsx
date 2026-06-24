@@ -9,14 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlusCircle, FileText, Eye, Users } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import type { Invitation, DashboardStats } from "@/types";
-
-function getWeekStart(): string {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  return monday.toISOString().split("T")[0];
-}
+import { getWeekStart } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user } = useAuth();

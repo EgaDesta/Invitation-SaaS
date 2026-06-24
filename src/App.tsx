@@ -30,20 +30,20 @@ const App = () => (
           <Toaster />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/demo" element={<Demo />} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/dashboard/create" element={<ProtectedRoute><CreateInvitation /></ProtectedRoute>} />
-              <Route path="/dashboard/invitations" element={<ProtectedRoute><MyInvitations /></ProtectedRoute>} />
-              <Route path="/dashboard/invitations/:id/guests" element={<ProtectedRoute><GuestManager /></ProtectedRoute>} />
-              <Route path="/dashboard/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
-              <Route path="/invite/:slug" element={<InvitationView />} />
-              <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
-              <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
-              <Route path="/admin/templates" element={<ProtectedRoute adminOnly><AdminTemplates /></ProtectedRoute>} />
-              <Route path="/admin/transactions" element={<ProtectedRoute adminOnly><AdminTransactions /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="/" element={<ErrorBoundary><Landing /></ErrorBoundary>} />
+              <Route path="/auth" element={<ErrorBoundary><Auth /></ErrorBoundary>} />
+              <Route path="/demo" element={<ErrorBoundary><Demo /></ErrorBoundary>} />
+              <Route path="/dashboard" element={<ErrorBoundary><ProtectedRoute><Dashboard /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/dashboard/create" element={<ErrorBoundary><ProtectedRoute><CreateInvitation /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/dashboard/invitations" element={<ErrorBoundary><ProtectedRoute><MyInvitations /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/dashboard/invitations/:id/guests" element={<ErrorBoundary><ProtectedRoute><GuestManager /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/dashboard/subscription" element={<ErrorBoundary><ProtectedRoute><Subscription /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/invite/:slug" element={<ErrorBoundary><InvitationView /></ErrorBoundary>} />
+              <Route path="/admin" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/admin/users" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/admin/templates" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminTemplates /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/admin/transactions" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminTransactions /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>

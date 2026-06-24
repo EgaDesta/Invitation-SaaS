@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Palette, Type, Layout, Sparkles, Image, Eye, Layers, RotateCcw, Wand2,
+  Palette, Type, Layout, Sparkles, Image, Eye, Layers, RotateCcw,
   Heart, Star, Flower2, Zap, PartyPopper, Paintbrush
 } from "lucide-react";
 import {

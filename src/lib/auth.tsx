@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => checkAdminRole(session.user.id), 0);
+        checkAdminRole(session.user.id);
       } else {
         setIsAdmin(false);
       }

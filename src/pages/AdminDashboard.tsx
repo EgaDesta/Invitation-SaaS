@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
+import { getWeekStart } from "@/lib/utils";
 import { Users, FileText, DollarSign, TrendingUp } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -56,9 +57,4 @@ export default function AdminDashboard() {
   );
 }
 
-function getWeekStart() {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(now.setDate(diff)).toISOString().split("T")[0];
-}
+

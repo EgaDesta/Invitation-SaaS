@@ -39,7 +39,7 @@ export default function MyInvitations() {
 
   const handleDuplicate = async (inv: any) => {
     if (!user) return;
-    const { id, created_at, updated_at, slug, view_count, ...rest } = inv;
+    const { slug, ...rest } = inv;
     const newSlug = `${slug}-copy-${Date.now().toString(36)}`;
     const { error } = await supabase.from("invitations").insert({ ...rest, slug: newSlug, title: `${rest.title} (Copy)`, view_count: 0 });
     if (error) toast.error(error.message);

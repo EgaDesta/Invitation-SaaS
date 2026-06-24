@@ -1,14 +1,15 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Music, Pause, Play, MapPin, Calendar, Clock, Heart, Send, MessageCircle, Sparkles, Gift, Star } from "lucide-react";
+import { Pause, Play, MapPin, Calendar, Clock, Heart, Send, MessageCircle, Sparkles, Gift, Star } from "lucide-react";
 import SEO from "@/components/SEO";
-import { CustomDesignData, isCustomDesign, getEntranceVariants, getAnimationDuration, getRadiusClass, getSpacingClass, FONT_OPTIONS } from "@/lib/customDesignTypes";
+import { CustomDesignData, isCustomDesign, getEntranceVariants, getAnimationDuration, getRadiusClass, getSpacingClass } from "@/lib/customDesignTypes";
+import { sanitizeInput, loadGoogleFonts } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function InvitationView() {
@@ -47,62 +48,10 @@ export default function InvitationView() {
   useEffect(() => {
     if (!custom) return;
     const fonts = [custom.fonts.heading, custom.fonts.body];
-    const unique = [...new Set(fonts)];
-    const googleFonts = unique.map((f) => {
-      const opt = FONT_OPTIONS.find((fo) => fo.name === f);
-      return opt ? opt.google : f.replace(/ /g, "+");
-    });
-    const link = document.createElement("link");
-    link.href = `https://fonts.googleapis.com/css2?${googleFonts.map((f) => `family=${f}:wght@300;400;500;600;700;800;900`).join("&")}&display=swap`;
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-    return () => { document.head.removeChild(link); };
+    return loadGoogleFonts(fonts);
   }, [custom]);
 
-  // Build dynamic styles from custom design
-  const themeStyles = useMemo(() => {
-    if (!custom) return {};
-    const c = custom.colors;
-    const f = custom.fonts;
-    const bg = custom.background;
 
-    const sizeMap: Record<string, string> = {
-      "xs": "0.75rem", "sm": "0.875rem", "base": "1rem", "lg": "1.125rem", "xl": "1.25rem",
-      "2xl": "1.5rem", "3xl": "1.875rem", "4xl": "2.25rem", "5xl": "3rem", "6xl": "3.75rem",
-      "7xl": "4.5rem", "8xl": "6rem",
-    };
-    const spacingMap: Record<string, string> = { tight: "-0.025em", normal: "0", wide: "0.025em", wider: "0.05em", widest: "0.1em" };
-
-    let bgValue = "";
-    if (bg.type === "gradient") {
-      const dir = bg.gradientDirection === "to-r" ? "to right" : bg.gradientDirection === "to-b" ? "to bottom" : bg.gradientDirection === "to-br" ? "to bottom right" : "to top left";
-      bgValue = `linear-gradient(${dir}, ${bg.gradientFrom}, ${bg.gradientVia}, ${bg.gradientTo})`;
-    } else if (bg.type === "solid") {
-      bgValue = bg.gradientFrom;
-    } else if (bg.type === "image" && bg.imageUrl) {
-      bgValue = `url(${bg.imageUrl})`;
-    } else {
-      bgValue = `linear-gradient(to bottom right, ${c.background}, ${c.backgroundSecondary})`;
-    }
-
-    return {
-      "--custom-primary": c.primary,
-      "--custom-secondary": c.secondary,
-      "--custom-accent": c.accent,
-      "--custom-bg": c.background,
-      "--custom-bg-secondary": c.backgroundSecondary,
-      "--custom-text": c.text,
-      "--custom-text-muted": c.textMuted,
-      "--custom-card-bg": c.cardBg,
-      "--custom-heading-font": `"${f.heading}", serif`,
-      "--custom-body-font": `"${f.body}", sans-serif`,
-      "--custom-heading-size": sizeMap[f.headingSize] || "3rem",
-      "--custom-body-size": sizeMap[f.bodySize] || "1rem",
-      "--custom-heading-weight": f.headingWeight,
-      "--custom-letter-spacing": spacingMap[f.letterSpacing] || "0",
-      "--custom-bg-value": bgValue,
-    } as React.CSSProperties;
-  }, [custom]);
 
   // Animation helpers
   const entrance = useMemo(() => custom ? getEntranceVariants(custom.animations.entrance) : getEntranceVariants("fadeIn"), [custom]);
@@ -120,7 +69,6 @@ export default function InvitationView() {
 
   const headingFont = custom ? `"${custom.fonts.heading}", serif` : undefined;
   const bodyFont = custom ? `"${custom.fonts.body}", sans-serif` : undefined;
-  const headingSize = custom ? `var(--custom-heading-size)` : undefined;
   const headingWeight = custom ? custom.fonts.headingWeight : undefined;
   const bodySize = custom ? `var(--custom-body-size)` : undefined;
 
@@ -173,13 +121,19 @@ export default function InvitationView() {
   const openInvitation = () => {
     setOpened(true);
     if (audioRef.current && invitation?.music_url) {
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {
+        toast.info("Klik tombol musik untuk memutar lagu (autoplay diblokir browser)");
+      });
     }
   };
 
   const toggleMusic = () => {
     if (!audioRef.current) return;
-    if (isPlaying) { audioRef.current.pause(); } else { audioRef.current.play(); }
+    if (isPlaying) { audioRef.current.pause(); } else {
+      audioRef.current.play().catch(() => {
+        toast.error("Gagal memutar musik. Coba klik lagi.");
+      });
+    }
     setIsPlaying(!isPlaying);
   };
 
@@ -203,7 +157,7 @@ export default function InvitationView() {
       // Update existing guest dengan token
       await supabase.from("guests").update({
         rsvp_status: rsvpStatus,
-        rsvp_message: rsvpMessage || null,
+        rsvp_message: sanitizeInput(rsvpMessage) || null,
         rsvp_guests_count: rsvpCount,
       }).eq("id", guest.id);
       
@@ -224,15 +178,15 @@ export default function InvitationView() {
     if (existingGuest) {
       await supabase.from("guests").update({
         rsvp_status: rsvpStatus,
-        rsvp_message: rsvpMessage || null,
+        rsvp_message: sanitizeInput(rsvpMessage) || null,
         rsvp_guests_count: rsvpCount,
       }).eq("id", existingGuest.id);
     } else {
       await supabase.from("guests").insert([{
         invitation_id: invitation.id,
-        name: rsvpName.trim(),
+        name: sanitizeInput(rsvpName),
         rsvp_status: rsvpStatus,
-        rsvp_message: rsvpMessage || null,
+        rsvp_message: sanitizeInput(rsvpMessage) || null,
         rsvp_guests_count: rsvpCount,
       }]);
     }

@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import {
-  LayoutDashboard, PlusCircle, FileText, CreditCard, Settings, LogOut,
+  LayoutDashboard, PlusCircle, FileText, CreditCard, LogOut,
   Users, BarChart3, Layers, DollarSign, Menu, X, Moon, Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,13 +26,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dark, setDark] = useState(document.documentElement.classList.contains("dark"));
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
 
   const nav = isAdmin ? adminNav : userNav;
 
   const toggleDark = () => {
-    document.documentElement.classList.toggle("dark");
-    setDark(!dark);
+    const next = !dark;
+    document.documentElement.classList.toggle("dark", next);
+    setDark(next);
   };
 
   const handleSignOut = async () => {

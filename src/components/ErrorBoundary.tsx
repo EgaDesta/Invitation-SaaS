@@ -29,7 +29,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
           <div className="max-w-md w-full text-center space-y-4">
             <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-              <span className="text-3xl">⚠️</span>
+              <span className="text-3xl">!</span>
             </div>
             <h1 className="text-xl font-bold text-foreground">Terjadi Kesalahan</h1>
             <div className="text-sm text-muted-foreground space-y-2">
