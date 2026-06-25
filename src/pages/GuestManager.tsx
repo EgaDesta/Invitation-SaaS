@@ -11,6 +11,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { PlusCircle, Trash2, Download, Copy, QrCode } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { sanitizeInput } from "@/lib/utils";
+import { notifyEmail } from "@/lib/notifyEmail";
 
 export default function GuestManager() {
   const { id } = useParams<{ id: string }>();
@@ -34,18 +35,18 @@ export default function GuestManager() {
 
   const addGuest = async () => {
     if (!newName.trim() || !id) return;
-    const { error } = await supabase.from("guests").insert({ invitation_id: id, name: sanitizeInput(newName) });
+    const { data, error } = await supabase.from("guests").insert({ invitation_id: id, name: sanitizeInput(newName) }).select("id").single();
     if (error) toast.error(error.message);
-    else { setNewName(""); fetchData(); toast.success("Tamu ditambahkan"); }
+    else { setNewName(""); fetchData(); toast.success("Tamu ditambahkan"); if (data) notifyEmail({ invitationId: id, guestId: data.id, type: "guest_added" }); }
   };
 
   const addBulkGuests = async () => {
     if (!bulkNames.trim() || !id) return;
     const names = bulkNames.split("\n").map((n) => sanitizeInput(n)).filter(Boolean);
     const rows = names.map((name) => ({ invitation_id: id, name }));
-    const { error } = await supabase.from("guests").insert(rows);
+    const { data, error } = await supabase.from("guests").insert(rows).select("id");
     if (error) toast.error(error.message);
-    else { setBulkNames(""); setShowBulk(false); fetchData(); toast.success(`${names.length} tamu ditambahkan`); }
+    else { setBulkNames(""); setShowBulk(false); fetchData(); toast.success(`${names.length} tamu ditambahkan`); if (data && data.length > 0) notifyEmail({ invitationId: id, guestId: data[0].id, type: "guest_added" }); }
   };
 
   const deleteGuest = async (guestId: string) => {

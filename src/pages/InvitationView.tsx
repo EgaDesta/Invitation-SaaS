@@ -11,6 +11,7 @@ import SEO from "@/components/SEO";
 import { CustomDesignData, isCustomDesign, getEntranceVariants, getAnimationDuration, getRadiusClass, getSpacingClass } from "@/lib/customDesignTypes";
 import { TEMPLATE_CONFIGS } from "@/lib/templates";
 import { sanitizeInput, loadGoogleFonts, parseFeatures } from "@/lib/utils";
+import { notifyEmail } from "@/lib/notifyEmail";
 import { toast } from "sonner";
 
 export default function InvitationView() {
@@ -195,6 +196,7 @@ export default function InvitationView() {
         .not("rsvp_message", "is", null)
         .order("created_at", { ascending: false });
       if (data) setWishes(data);
+      notifyEmail({ invitationId: invitation.id, type: "rsvp_updated", guestId: guest.id });
       return;
     }
     
@@ -208,14 +210,16 @@ export default function InvitationView() {
         rsvp_message: sanitizeInput(rsvpMessage) || null,
         rsvp_guests_count: rsvpCount,
       }).eq("id", existingGuest.id);
+      notifyEmail({ invitationId: invitation.id, type: "rsvp_updated", guestId: existingGuest.id });
     } else {
-      await supabase.from("guests").insert([{
+      const { data: newGuest } = await supabase.from("guests").insert([{
         invitation_id: invitation.id,
         name: sanitizeInput(rsvpName),
         rsvp_status: rsvpStatus,
         rsvp_message: sanitizeInput(rsvpMessage) || null,
         rsvp_guests_count: rsvpCount,
-      }]);
+      }]).select("id").single();
+      if (newGuest) notifyEmail({ invitationId: invitation.id, type: "guest_added", guestId: newGuest.id });
     }
     setRsvpSubmitted(true);
     const { data } = await supabase.from("guests").select("name, rsvp_message, rsvp_status, created_at")

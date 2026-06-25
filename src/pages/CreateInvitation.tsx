@@ -16,6 +16,7 @@ import TemplateBuilder from "@/components/TemplateBuilder";
 import { TEMPLATE_CONFIGS } from "@/lib/templates";
 import { DEFAULT_CUSTOM_DESIGN, CustomDesignData } from "@/lib/customDesignTypes";
 import { getWeekStart, isValidMapEmbedUrl } from "@/lib/utils";
+import { notifyEmail } from "@/lib/notifyEmail";
 import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout, Smartphone, Tablet, Monitor, X } from "lucide-react";
 
 const steps = ["Template", "Detail Acara", "Media", "Preview"];
@@ -50,6 +51,7 @@ export default function CreateInvitation() {
     cover_image_url: "",
     music_url: "",
     gallery_urls: [] as string[],
+    notify_email: false,
   });
 
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function CreateInvitation() {
         cover_image_url: data.cover_image_url || "",
         music_url: data.music_url || "",
         gallery_urls: gallery,
+        notify_email: data.notify_email || false,
       });
 
       if (data.custom_data && data.custom_data.mode === "custom") {
@@ -208,6 +211,7 @@ export default function CreateInvitation() {
         music_url: form.music_url || null,
         gallery_urls: form.gallery_urls,
         custom_data: customData,
+        notify_email: form.notify_email,
       }).eq("id", id);
 
       if (error) toast.error(error.message);
@@ -245,7 +249,7 @@ export default function CreateInvitation() {
     
     const slug = generateSlug();
 
-    const { error } = await supabase.from("invitations").insert({
+    const { data: newInv, error } = await supabase.from("invitations").insert({
       user_id: user.id,
       template_id: mode === "template" && dbTemplate ? form.template_id : null,
       slug,
@@ -263,7 +267,8 @@ export default function CreateInvitation() {
       gallery_urls: form.gallery_urls,
       is_published: true,
       custom_data: customData,
-    });
+      notify_email: form.notify_email,
+    }).select("id").single();
 
     if (error) {
       toast.error(error.message);
@@ -274,6 +279,9 @@ export default function CreateInvitation() {
         await supabase.from("usage_logs").insert({ user_id: user.id, week_start: weekStart, invitation_count: 1 });
       }
       toast.success(`Undangan berhasil dibuat! Sisa quota: ${currentQuota - currentUsage - 1}`);
+      if (newInv && form.notify_email) {
+        notifyEmail({ invitationId: newInv.id, type: "invitation_created" });
+      }
       navigate("/dashboard/invitations");
     }
     setLoading(false);
@@ -450,6 +458,10 @@ export default function CreateInvitation() {
                       <Label>Google Maps Embed URL (opsional)</Label>
                       <Input placeholder="https://www.google.com/maps/embed?pb=..." value={form.map_embed_url} onChange={(e) => updateForm("map_embed_url", e.target.value)} maxLength={500} />
                       <p className="text-xs text-muted-foreground">Buka Google Maps → Share → Embed a map → Salin URL dari src="..."</p>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <input type="checkbox" id="notify_email" checked={form.notify_email} onChange={(e) => updateForm("notify_email", e.target.checked)} className="rounded border-border" />
+                      <Label htmlFor="notify_email" className="text-sm cursor-pointer">Kirim notifikasi email ketika ada tamu baru atau RSVP</Label>
                     </div>
                   </div>
                 )}
