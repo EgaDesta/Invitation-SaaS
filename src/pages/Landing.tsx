@@ -6,6 +6,7 @@ import { Heart, Sparkles, Users, Music, QrCode, MapPin, ArrowRight, Check } from
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
+import { parseFeatures } from "@/lib/utils";
 
 const features = [
   { icon: Heart, title: "Template Elegan", desc: "Pilihan template premium untuk pernikahan, ulang tahun, & acara besar" },
@@ -136,7 +137,7 @@ export default function Landing() {
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Pilih Paket yang Tepat</h2>
             <p className="text-muted-foreground text-lg">Mulai gratis, upgrade kapan saja</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((plan, i) => (
               <motion.div
                 key={plan.id}
@@ -161,7 +162,7 @@ export default function Landing() {
                       {plan.price > 0 && <span className="text-muted-foreground text-sm">/bulan</span>}
                     </div>
                     <ul className="space-y-3 mb-6">
-                      {(plan.features as string[])?.map((f: string) => (
+                      {parseFeatures(plan.features).map((f) => (
                         <li key={f} className="flex items-start gap-2 text-sm">
                           <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                           <span>{f}</span>
