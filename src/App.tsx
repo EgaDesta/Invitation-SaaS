@@ -20,6 +20,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminTransactions from "./pages/AdminTransactions";
 import AdminPlans from "./pages/AdminPlans";
+import Onboarding from "./pages/Onboarding";
 import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<ErrorBoundary><Landing /></ErrorBoundary>} />
               <Route path="/auth" element={<ErrorBoundary><Auth /></ErrorBoundary>} />
+              <Route path="/onboarding" element={<ErrorBoundary><ProtectedRoute><Onboarding /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/demo" element={<ErrorBoundary><Demo /></ErrorBoundary>} />
               <Route path="/dashboard" element={<ErrorBoundary><ProtectedRoute><Dashboard /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/create" element={<ErrorBoundary><ProtectedRoute><CreateInvitation /></ProtectedRoute></ErrorBoundary>} />

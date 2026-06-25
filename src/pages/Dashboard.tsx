@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { getWeekStart } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({ invitations: 0, totalViews: 0, totalGuests: 0 });
   const [weeklyUsage, setWeeklyUsage] = useState(0);
   const [weeklyQuota, setWeeklyQuota] = useState(6);
@@ -20,6 +21,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return;
+
+    const checkOnboarding = async () => {
+      const { data: profile } = await supabase.from("profiles").select("is_onboarded").eq("user_id", user.id).maybeSingle();
+      if (profile && !profile.is_onboarded) {
+        navigate("/onboarding", { replace: true });
+      }
+    };
+    checkOnboarding();
 
     const fetchData = async () => {
       const { data: invData } = await supabase
