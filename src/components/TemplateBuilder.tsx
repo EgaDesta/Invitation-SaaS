@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,12 +24,14 @@ interface TemplateBuilderProps {
 }
 
 export default function TemplateBuilder({ design, onChange }: TemplateBuilderProps) {
+  const [activeTab, setActiveTab] = useState("colors");
+
   const update = (path: string, value: any) => {
+    // Use functional update to avoid stale closure issues
+    const next = JSON.parse(JSON.stringify(design));
     const keys = path.split(".");
-    const next = { ...design };
     let obj: any = next;
     for (let i = 0; i < keys.length - 1; i++) {
-      obj[keys[i]] = { ...obj[keys[i]] };
       obj = obj[keys[i]];
     }
     obj[keys[keys.length - 1]] = value;
@@ -36,11 +39,13 @@ export default function TemplateBuilder({ design, onChange }: TemplateBuilderPro
   };
 
   const applyPreset = (colors: CustomColors) => {
-    update("colors", colors);
+    const next = JSON.parse(JSON.stringify(design));
+    next.colors = colors;
+    onChange(next);
   };
 
   const resetDesign = () => {
-    onChange({ ...DEFAULT_CUSTOM_DESIGN });
+    onChange(JSON.parse(JSON.stringify(DEFAULT_CUSTOM_DESIGN)));
   };
 
   return (
@@ -55,7 +60,7 @@ export default function TemplateBuilder({ design, onChange }: TemplateBuilderPro
         </Button>
       </div>
 
-      <Tabs defaultValue="colors" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-6 w-full h-auto p-1">
           <TabsTrigger value="colors" className="text-xs flex-col gap-1 py-2 px-1">
             <Palette className="w-4 h-4" /> Warna

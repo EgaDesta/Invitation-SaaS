@@ -16,7 +16,7 @@ import TemplateBuilder from "@/components/TemplateBuilder";
 import { TEMPLATE_CONFIGS } from "@/lib/templates";
 import { DEFAULT_CUSTOM_DESIGN, CustomDesignData } from "@/lib/customDesignTypes";
 import { getWeekStart, isValidMapEmbedUrl } from "@/lib/utils";
-import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout } from "lucide-react";
+import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout, Smartphone, Tablet, Monitor } from "lucide-react";
 
 const steps = ["Template", "Detail Acara", "Media", "Preview"];
 
@@ -30,6 +30,7 @@ export default function CreateInvitation() {
   const [uploadingMusic, setUploadingMusic] = useState(false);
   const [mode, setMode] = useState<"template" | "custom">("template");
   const [customDesign, setCustomDesign] = useState<CustomDesignData>({ ...DEFAULT_CUSTOM_DESIGN });
+  const [previewDevice, setPreviewDevice] = useState<"mobile" | "tablet" | "desktop">("mobile");
 
   const [form, setForm] = useState({
     template_id: "",
@@ -288,7 +289,7 @@ export default function CreateInvitation() {
                         ))}
                       </div>
                     ) : (
-                      <TemplateBuilder design={customDesign} onChange={setCustomDesign} />
+                      <TemplateBuilder key="custom-builder" design={customDesign} onChange={setCustomDesign} />
                     )}
                   </div>
                 )}
@@ -431,16 +432,52 @@ export default function CreateInvitation() {
           </motion.div>
         </div>
 
-        {/* Mobile preview - right side (hidden on mobile) */}
+        {/* Preview - right side (hidden on mobile) */}
         <div className="hidden lg:block sticky top-24 self-start">
-          <p className="text-xs text-muted-foreground text-center mb-3">Preview Mobile</p>
+          <div className="flex items-center justify-center gap-1 mb-3 bg-secondary rounded-lg p-1">
+            <button
+              onClick={() => setPreviewDevice("mobile")}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${previewDevice === "mobile" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}
+            >
+              <Smartphone className="w-3.5 h-3.5" /> HP
+            </button>
+            <button
+              onClick={() => setPreviewDevice("tablet")}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${previewDevice === "tablet" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}
+            >
+              <Tablet className="w-3.5 h-3.5" /> Tablet
+            </button>
+            <button
+              onClick={() => setPreviewDevice("desktop")}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${previewDevice === "desktop" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}
+            >
+              <Monitor className="w-3.5 h-3.5" /> Desktop
+            </button>
+          </div>
           <div className="relative">
-            <div className="w-[300px] h-[600px] rounded-[2.5rem] border-[8px] border-foreground/10 bg-background shadow-2xl overflow-hidden">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-foreground/10 rounded-b-lg z-10" />
-              <div className="w-full h-full overflow-hidden rounded-[2rem]">
-                <InvitationPreview form={form} templateData={getTemplateData()} />
+            {previewDevice === "mobile" && (
+              <div className="w-[300px] h-[600px] rounded-[2.5rem] border-[8px] border-foreground/10 bg-background shadow-2xl overflow-hidden mx-auto">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-foreground/10 rounded-b-lg z-10" />
+                <div className="w-full h-full overflow-hidden rounded-[2rem]">
+                  <InvitationPreview form={form} templateData={getTemplateData()} />
+                </div>
               </div>
-            </div>
+            )}
+            {previewDevice === "tablet" && (
+              <div className="w-[540px] h-[720px] rounded-[1.5rem] border-[6px] border-foreground/10 bg-background shadow-2xl overflow-hidden mx-auto">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-2 bg-foreground/10 rounded-b-md z-10" />
+                <div className="w-full h-full overflow-hidden rounded-[1.2rem]">
+                  <InvitationPreview form={form} templateData={getTemplateData()} />
+                </div>
+              </div>
+            )}
+            {previewDevice === "desktop" && (
+              <div className="w-[640px] h-[420px] rounded-lg border-[4px] border-foreground/10 bg-background shadow-2xl overflow-hidden mx-auto">
+                <div className="w-full h-full overflow-hidden rounded-[0.3rem]">
+                  <InvitationPreview form={form} templateData={getTemplateData()} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pause, Play, MapPin, Calendar, Clock, Heart, Send, MessageCircle, Sparkles, Gift, Star } from "lucide-react";
 import SEO from "@/components/SEO";
 import { CustomDesignData, isCustomDesign, getEntranceVariants, getAnimationDuration, getRadiusClass, getSpacingClass } from "@/lib/customDesignTypes";
-import { sanitizeInput, loadGoogleFonts } from "@/lib/utils";
+import { TEMPLATE_CONFIGS } from "@/lib/templates";
+import { sanitizeInput, loadGoogleFonts, parseFeatures } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function InvitationView() {
@@ -18,6 +19,7 @@ export default function InvitationView() {
   const guestName = decodeURIComponent(searchParams.get("to") || "Tamu Undangan");
 
   const [invitation, setInvitation] = useState<any>(null);
+  const [adminTemplateData, setAdminTemplateData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [opened, setOpened] = useState(false);
@@ -36,20 +38,33 @@ export default function InvitationView() {
   const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
   const [wishes, setWishes] = useState<any[]>([]);
 
-  // Determine if custom design
+  // Determine if custom design (from invitation custom_data or admin template_data)
   const custom = useMemo(() => {
     if (invitation?.custom_data && isCustomDesign(invitation.custom_data)) {
       return invitation.custom_data as CustomDesignData;
     }
+    if (adminTemplateData && isCustomDesign(adminTemplateData)) {
+      return adminTemplateData as CustomDesignData;
+    }
     return null;
-  }, [invitation]);
+  }, [invitation, adminTemplateData]);
 
-  // Load Google Fonts for custom design
+  // Look up template config when not custom
+  const templateConfig = useMemo(() => {
+    if (custom || !invitation?.template_id) return null;
+    return TEMPLATE_CONFIGS.find(t => t.id === invitation.template_id) || null;
+  }, [custom, invitation]);
+
+  // Load Google Fonts for custom design or template
   useEffect(() => {
-    if (!custom) return;
-    const fonts = [custom.fonts.heading, custom.fonts.body];
-    return loadGoogleFonts(fonts);
-  }, [custom]);
+    const fonts: string[] = [];
+    if (custom) {
+      fonts.push(custom.fonts.heading, custom.fonts.body);
+    } else if (templateConfig) {
+      fonts.push(templateConfig.fonts.display, templateConfig.fonts.body);
+    }
+    if (fonts.length > 0) return loadGoogleFonts(fonts);
+  }, [custom, templateConfig]);
 
 
 
@@ -60,15 +75,15 @@ export default function InvitationView() {
   const spacingClass = useMemo(() => custom ? getSpacingClass(custom.layout.sectionSpacing) : "space-y-20", [custom]);
 
   const isCustomMode = !!custom;
-  const primaryColor = custom?.colors.primary || "#e11d48";
-  const secondaryColor = custom?.colors.secondary || "#f59e0b";
+  const primaryColor = custom?.colors.primary || templateConfig?.colors.primary || "#e11d48";
+  const secondaryColor = custom?.colors.secondary || templateConfig?.colors.secondary || "#f59e0b";
   const accentColor = custom?.colors.accent || "#ec4899";
-  const textColor = custom?.colors.text || "#1f2937";
+  const textColor = custom?.colors.text || templateConfig?.colors.text || "#1f2937";
   const textMutedColor = custom?.colors.textMuted || "#6b7280";
   const cardBg = custom?.colors.cardBg || "#ffffff";
 
-  const headingFont = custom ? `"${custom.fonts.heading}", serif` : undefined;
-  const bodyFont = custom ? `"${custom.fonts.body}", sans-serif` : undefined;
+  const headingFont = custom ? `"${custom.fonts.heading}", serif` : templateConfig ? `"${templateConfig.fonts.display}", serif` : undefined;
+  const bodyFont = custom ? `"${custom.fonts.body}", sans-serif` : templateConfig ? `"${templateConfig.fonts.body}", sans-serif` : undefined;
   const headingWeight = custom ? custom.fonts.headingWeight : undefined;
   const bodySize = custom ? `var(--custom-body-size)` : undefined;
 
@@ -83,6 +98,18 @@ export default function InvitationView() {
         .single();
       if (data) {
         setInvitation(data);
+
+        // If using an admin template (not in TEMPLATE_CONFIGS), fetch its template_data
+        if (data.template_id && !TEMPLATE_CONFIGS.find(t => t.id === data.template_id)) {
+          supabase.from("invitation_templates")
+            .select("template_data")
+            .eq("id", data.template_id)
+            .maybeSingle()
+            .then(({ data: tmpl }) => {
+              if (tmpl?.template_data) setAdminTemplateData(tmpl.template_data);
+            });
+        }
+
         await supabase.from("invitations").update({ view_count: (data.view_count || 0) + 1 }).eq("id", data.id);
       }
       setLoading(false);
@@ -403,7 +430,7 @@ export default function InvitationView() {
       )}
 
       {opened && (
-        <div className={`max-w-${custom?.layout.maxWidth || "2xl"} mx-auto px-4 py-12 ${spacingClass} relative z-10`}>
+        <div className={`mx-auto px-4 py-12 ${spacingClass} relative z-10`} style={{ maxWidth: custom ? ({ sm: "640px", md: "768px", lg: "1024px", xl: "1280px", "2xl": "1536px", "3xl": "1600px", full: "100%" }[custom.layout.maxWidth] || "1536px") : "1536px" }}>
           {/* Hero */}
           <motion.section
             initial="hidden" animate="visible" variants={entrance}
@@ -516,20 +543,23 @@ export default function InvitationView() {
           )}
 
           {/* Gallery */}
-          {invitation.gallery_urls && (invitation.gallery_urls as string[]).length > 0 && showSection("showGallery") && (
-            <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }}>
-              <motion.h3 variants={entrance} className="text-3xl text-center mb-8" style={{ fontFamily: headingFont, background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                Galeri Momen
-              </motion.h3>
-              <div className="grid grid-cols-2 gap-4">
-                {(invitation.gallery_urls as string[]).map((url: string, i: number) => (
-                  <motion.div key={i} variants={entrance} {...hoverProps} className={`${radiusClass} overflow-hidden shadow-lg aspect-square`}>
-                    <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
-                  </motion.div>
-                ))}
-              </div>
-            </motion.section>
-          )}
+          {(() => {
+            const galleryUrls = parseFeatures(invitation.gallery_urls) as string[];
+            return galleryUrls.length > 0 && showSection("showGallery") && (
+              <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }}>
+                <motion.h3 variants={entrance} className="text-3xl text-center mb-8" style={{ fontFamily: headingFont, background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  Galeri Momen
+                </motion.h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {galleryUrls.map((url: string, i: number) => (
+                    <motion.div key={i} variants={entrance} {...hoverProps} className={`${radiusClass} overflow-hidden shadow-lg aspect-square`}>
+                      <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.section>
+            );
+          })()}
 
           {/* Event Details */}
           <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.15 } } }} className="space-y-6">

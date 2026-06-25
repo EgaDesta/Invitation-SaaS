@@ -105,6 +105,7 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
           <p className="text-xs opacity-60 mb-4">Anda diundang untuk hadir di</p>
           <h1 className="text-2xl font-bold" style={{
             fontFamily: headingFont,
+            color: colors.primary,
             background: `linear-gradient(to right, ${colors.primary}, ${custom?.colors.accent || colors.secondary})`,
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
