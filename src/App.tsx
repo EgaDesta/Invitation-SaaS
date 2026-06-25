@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateInvitation from "./pages/CreateInvitation";
 import MyInvitations from "./pages/MyInvitations";
 import GuestManager from "./pages/GuestManager";
+import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import InvitationView from "./pages/InvitationView";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/dashboard/create" element={<ErrorBoundary><ProtectedRoute><CreateInvitation /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/invitations" element={<ErrorBoundary><ProtectedRoute><MyInvitations /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/invitations/:id/guests" element={<ErrorBoundary><ProtectedRoute><GuestManager /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/dashboard/profile" element={<ErrorBoundary><ProtectedRoute><Profile /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/subscription" element={<ErrorBoundary><ProtectedRoute><Subscription /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/invite/:slug" element={<ErrorBoundary><InvitationView /></ErrorBoundary>} />
               <Route path="/admin" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute></ErrorBoundary>} />

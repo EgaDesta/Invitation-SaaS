@@ -1,9 +1,10 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, PlusCircle, FileText, CreditCard, LogOut,
-  Users, BarChart3, Layers, DollarSign, Menu, X, Moon, Sun,
+  Users, BarChart3, Layers, DollarSign, Menu, X, Moon, Sun, User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ const userNav = [
   { to: "/dashboard/create", icon: PlusCircle, label: "Buat Undangan" },
   { to: "/dashboard/invitations", icon: FileText, label: "Undangan Saya" },
   { to: "/dashboard/subscription", icon: CreditCard, label: "Langganan" },
+  { to: "/dashboard/profile", icon: User, label: "Profil" },
 ];
 
 const adminNav = [
@@ -27,8 +29,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const [profileData, setProfileData] = useState<{ full_name: string; avatar_url: string }>({ full_name: "", avatar_url: "" });
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const nav = isAdmin ? adminNav : userNav;
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("full_name, avatar_url").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      if (data) setProfileData({ full_name: data.full_name || "", avatar_url: data.avatar_url || "" });
+    });
+  }, [user]);
 
   const toggleDark = () => {
     const next = !dark;
@@ -126,9 +137,50 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1" />
-          <span className="text-sm text-muted-foreground">
-            {user?.email}
-          </span>
+
+          {/* Avatar dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-secondary flex items-center justify-center">
+                {profileData.avatar_url ? (
+                  <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
+              <span className="text-sm text-muted-foreground hidden sm:block max-w-[120px] truncate">
+                {profileData.full_name || user?.email}
+              </span>
+            </button>
+
+            {dropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 w-56 bg-card border border-border rounded-xl shadow-xl z-50 py-1">
+                  <div className="px-4 py-3 border-b border-border">
+                    <p className="font-medium text-sm truncate">{profileData.full_name || "Pengguna"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                  <Link
+                    to="/dashboard/profile"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-secondary/50 transition-colors"
+                  >
+                    <User className="w-4 h-4" /> Profil
+                  </Link>
+                  <button
+                    onClick={() => { setDropdownOpen(false); handleSignOut(); }}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 w-full transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" /> Keluar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </header>
         <main className="flex-1 p-4 lg:p-6">{children}</main>
       </div>
