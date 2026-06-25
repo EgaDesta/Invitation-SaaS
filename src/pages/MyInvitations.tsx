@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
-import { PlusCircle, Eye, Copy, Trash2, ExternalLink, Users, Pencil } from "lucide-react";
+import { PlusCircle, Eye, Copy, Trash2, ExternalLink, Users, Pencil, BarChart3 } from "lucide-react";
 
 export default function MyInvitations() {
   const { user } = useAuth();
@@ -109,6 +109,11 @@ export default function MyInvitations() {
                       <Link to={`/dashboard/invitations/${inv.id}/edit`}>
                         <Button size="sm" variant="ghost" title="Edit undangan">
                           <Pencil className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <Link to={`/dashboard/invitations/${inv.id}/analytics`}>
+                        <Button size="sm" variant="ghost" title="Analytics">
+                          <BarChart3 className="w-4 h-4" />
                         </Button>
                       </Link>
                       <Button size="sm" variant="ghost" onClick={() => handleDuplicate(inv)} title="Duplikasi">

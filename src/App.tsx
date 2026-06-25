@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateInvitation from "./pages/CreateInvitation";
 import MyInvitations from "./pages/MyInvitations";
 import GuestManager from "./pages/GuestManager";
+import InvitationAnalytics from "./pages/InvitationAnalytics";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import InvitationView from "./pages/InvitationView";
@@ -18,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminTransactions from "./pages/AdminTransactions";
+import AdminPlans from "./pages/AdminPlans";
 import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +41,7 @@ const App = () => (
               <Route path="/dashboard/invitations" element={<ErrorBoundary><ProtectedRoute><MyInvitations /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/invitations/:id/edit" element={<ErrorBoundary><ProtectedRoute><CreateInvitation /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/invitations/:id/guests" element={<ErrorBoundary><ProtectedRoute><GuestManager /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/dashboard/invitations/:id/analytics" element={<ErrorBoundary><ProtectedRoute><InvitationAnalytics /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/profile" element={<ErrorBoundary><ProtectedRoute><Profile /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/subscription" element={<ErrorBoundary><ProtectedRoute><Subscription /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/invite/:slug" element={<ErrorBoundary><InvitationView /></ErrorBoundary>} />
@@ -46,6 +49,7 @@ const App = () => (
               <Route path="/admin/users" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/admin/templates" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminTemplates /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/admin/transactions" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminTransactions /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/admin/plans" element={<ErrorBoundary><ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute></ErrorBoundary>} />
               <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
             </Routes>
           </BrowserRouter>

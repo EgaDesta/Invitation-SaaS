@@ -20,6 +20,7 @@ const adminNav = [
   { to: "/admin", icon: BarChart3, label: "Statistik" },
   { to: "/admin/users", icon: Users, label: "Kelola User" },
   { to: "/admin/templates", icon: Layers, label: "Template" },
+  { to: "/admin/plans", icon: CreditCard, label: "Paket" },
   { to: "/admin/transactions", icon: DollarSign, label: "Transaksi" },
 ];
 
