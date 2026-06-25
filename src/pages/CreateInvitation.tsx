@@ -16,7 +16,7 @@ import TemplateBuilder from "@/components/TemplateBuilder";
 import { TEMPLATE_CONFIGS } from "@/lib/templates";
 import { DEFAULT_CUSTOM_DESIGN, CustomDesignData } from "@/lib/customDesignTypes";
 import { getWeekStart, isValidMapEmbedUrl } from "@/lib/utils";
-import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout, Smartphone, Tablet, Monitor } from "lucide-react";
+import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout, Smartphone, Tablet, Monitor, X } from "lucide-react";
 
 const steps = ["Template", "Detail Acara", "Media", "Preview"];
 
@@ -31,6 +31,7 @@ export default function CreateInvitation() {
   const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingMusic, setUploadingMusic] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [mode, setMode] = useState<"template" | "custom">("template");
   const [customDesign, setCustomDesign] = useState<CustomDesignData>({ ...DEFAULT_CUSTOM_DESIGN });
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "tablet" | "desktop">("mobile");
@@ -48,6 +49,7 @@ export default function CreateInvitation() {
     map_embed_url: "",
     cover_image_url: "",
     music_url: "",
+    gallery_urls: [] as string[],
   });
 
   useEffect(() => {
@@ -63,6 +65,7 @@ export default function CreateInvitation() {
       const { data, error } = await supabase.from("invitations").select("*").eq("id", id).single();
       if (error || !data) { toast.error("Undangan tidak ditemukan"); navigate("/dashboard/invitations"); return; }
 
+      const gallery = Array.isArray(data.gallery_urls) ? data.gallery_urls : [];
       setForm({
         template_id: data.template_id || "",
         title: data.title || "",
@@ -76,6 +79,7 @@ export default function CreateInvitation() {
         map_embed_url: data.map_embed_url || "",
         cover_image_url: data.cover_image_url || "",
         music_url: data.music_url || "",
+        gallery_urls: gallery,
       });
 
       if (data.custom_data && data.custom_data.mode === "custom") {
@@ -98,6 +102,41 @@ export default function CreateInvitation() {
     if (!selectedTemplate) return undefined;
     if ("colors" in selectedTemplate) return { colors: selectedTemplate.colors, fonts: selectedTemplate.fonts };
     return selectedTemplate.template_data;
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !user) return;
+    const remaining = 10 - form.gallery_urls.length;
+    if (remaining <= 0) { toast.error("Maksimal 10 foto galeri"); return; }
+
+    setUploadingGallery(true);
+    const uploaded: string[] = [];
+    const toUpload = Math.min(files.length, remaining);
+
+    for (let i = 0; i < toUpload; i++) {
+      const file = files[i];
+      if (file.size > 5 * 1024 * 1024) { toast.error(`"${file.name}" terlalu besar (maks 5MB)`); continue; }
+      if (!file.type.startsWith("image/")) continue;
+
+      const path = `${user.id}/gallery/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("invitations").upload(path, file);
+      if (error) { toast.error(`Gagal upload ${file.name}: ${error.message}`); continue; }
+
+      const { data: urlData } = supabase.storage.from("invitations").getPublicUrl(path);
+      uploaded.push(urlData.publicUrl);
+    }
+
+    if (uploaded.length > 0) {
+      setForm((f) => ({ ...f, gallery_urls: [...f.gallery_urls, ...uploaded] }));
+      toast.success(`${uploaded.length} foto berhasil diupload`);
+    }
+    setUploadingGallery(false);
+    if (e.target) e.target.value = "";
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setForm((f) => ({ ...f, gallery_urls: f.gallery_urls.filter((_, i) => i !== index) }));
   };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,6 +206,7 @@ export default function CreateInvitation() {
         map_embed_url: form.map_embed_url,
         cover_image_url: form.cover_image_url || null,
         music_url: form.music_url || null,
+        gallery_urls: form.gallery_urls,
         custom_data: customData,
       }).eq("id", id);
 
@@ -220,6 +260,7 @@ export default function CreateInvitation() {
       map_embed_url: form.map_embed_url,
       cover_image_url: form.cover_image_url || null,
       music_url: form.music_url || null,
+      gallery_urls: form.gallery_urls,
       is_published: true,
       custom_data: customData,
     });
@@ -433,6 +474,33 @@ export default function CreateInvitation() {
                           <span className="text-sm text-muted-foreground">{uploadingCover ? "Mengupload..." : "Klik untuk upload foto cover"}</span>
                           <span className="text-xs text-muted-foreground mt-1">Maks 5MB • JPG, PNG, WebP</span>
                           <input type="file" className="hidden" accept="image/*" onChange={handleCoverUpload} disabled={uploadingCover} />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Gallery Upload */}
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2"><Image className="w-4 h-4" /> Galeri Foto (opsional)</Label>
+                      {form.gallery_urls.length > 0 && (
+                        <div className="grid grid-cols-5 gap-2 mb-3">
+                          {form.gallery_urls.map((url, i) => (
+                            <div key={i} className="relative aspect-square rounded-lg overflow-hidden border">
+                              <img src={url} alt={`Galeri ${i + 1}`} className="w-full h-full object-cover" />
+                              <button
+                                onClick={() => removeGalleryImage(i)}
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {form.gallery_urls.length < 10 && (
+                        <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors">
+                          <Upload className="w-6 h-6 text-muted-foreground mb-1" />
+                          <span className="text-xs text-muted-foreground">{uploadingGallery ? "Mengupload..." : `Upload foto (${form.gallery_urls.length}/10)`}</span>
+                          <input type="file" className="hidden" accept="image/*" multiple onChange={handleGalleryUpload} disabled={uploadingGallery} />
                         </label>
                       )}
                     </div>
