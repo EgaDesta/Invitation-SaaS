@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Sparkles, Users, Music, QrCode, MapPin, ArrowRight, Check } from "lucide-react";
+import { Heart, Sparkles, Users, Music, QrCode, MapPin, ArrowRight, Check, Star, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
@@ -22,8 +22,25 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
+const testimonials = [
+  { name: "Sarah & Andi", role: "Pernikahan", text: "Membuat undangan pernikahan jadi sangat mudah! Tamu kami suka dengan tampilan digitalnya. Fitur RSVP dan countdown sangat membantu." },
+  { name: "Rina Wijaya", role: "Ulang Tahun", text: "Anak-anak senang undangan ulang tahunnya interaktif. Bisa upload galeri foto dan musik favorit. Recommended!" },
+  { name: "PT Maju Bersama", role: "Corporate Event", text: "Platform yang profesional untuk undangan corporate. Fitur guest management dan QR code sangat berguna untuk acara besar." },
+  { name: "Dian Permata", role: "Wedding Organizer", text: "Saya pakai Undanganku untuk semua klien wedding. Template-nya elegan, custom design-nya keren, dan client puas!" },
+];
+
+const faqItems = [
+  { q: "Apakah benar-benar gratis?", a: "Ya! Kamu bisa mulai dengan paket Gratis selamanya. Upgrade ke paket Basic, Premium, atau Pro untuk fitur lebih lengkap seperti kapasitas tamu lebih besar, custom domain, dan prioritas support." },
+  { q: "Bagaimana cara membagikan undangan?", a: "Setiap undangan punya link unik yang bisa kamu bagikan via WhatsApp, email, atau media sosial. Kamu juga bisa generate QR code untuk setiap tamu undangan." },
+  { q: "Bisa pakai nama domain sendiri?", a: "Bisa! Di paket Premium dan Pro, kamu bisa menggunakan domain sendiri untuk undangan. Tinggal setting CNAME di DNS, dan kami handle sisanya." },
+  { q: "Apakah tamu perlu install aplikasi?", a: "Tidak perlu. Semua undangan bisa dibuka langsung dari browser HP atau desktop. Tampilan sudah responsive dan siap di semua perangkat." },
+  { q: "Bagaimana dengan data tamu?", a: "Data tamu aman tersimpan di database kami. Kamu bisa export data tamu ke CSV kapan saja. Kami juga sediakan unique token untuk setiap tamu." },
+  { q: "Bisa edit setelah publish?", a: "Tentu! Kamu bisa edit undangan kapan saja setelah dipublikasikan. Mulai dari teks, foto, musik, bahkan template atau custom design." },
+];
+
 export default function Landing() {
   const [plans, setPlans] = useState<any[]>([]);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
     supabase.from("subscription_plans").select("*").order("price").then(({ data }) => {
@@ -130,6 +147,38 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Testimonials */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <motion.div className="text-center mb-16" initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.h2 variants={fadeUp} custom={0} className="text-3xl md:text-4xl font-display font-bold mb-4">
+              Dicintai oleh Ribuan Pengguna
+            </motion.h2>
+            <motion.p variants={fadeUp} custom={1} className="text-muted-foreground text-lg max-w-xl mx-auto">
+              Lihat apa kata mereka tentang Undanganku
+            </motion.p>
+          </motion.div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {testimonials.map((t, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+                <Card className="h-full border-border/50 hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex gap-1 mb-3">
+                      {[...Array(5)].map((_, s) => (<Star key={s} className="w-4 h-4 fill-primary text-primary" />))}
+                    </div>
+                    <p className="text-muted-foreground mb-4 italic">"{t.text}"</p>
+                    <div>
+                      <p className="font-semibold">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.role}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
@@ -174,6 +223,39 @@ export default function Landing() {
                         {plan.price === 0 ? "Mulai Gratis" : "Langganan Sekarang"}
                       </Button>
                     </Link>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 px-4 bg-secondary/30">
+        <div className="container mx-auto max-w-3xl">
+          <motion.div className="text-center mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.h2 variants={fadeUp} custom={0} className="text-3xl md:text-4xl font-display font-bold mb-4">
+              Pertanyaan Umum
+            </motion.h2>
+            <motion.p variants={fadeUp} custom={1} className="text-muted-foreground text-lg">
+              Semua yang perlu kamu tahu tentang Undanganku
+            </motion.p>
+          </motion.div>
+          <div className="space-y-3">
+            {faqItems.map((item, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                <Card className="border-border/50 cursor-pointer" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-sm md:text-base">{item.q}</h3>
+                      {openFaq === i ? <ChevronUp className="w-4 h-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />}
+                    </div>
+                    {openFaq === i && (
+                      <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                        {item.a}
+                      </motion.p>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
