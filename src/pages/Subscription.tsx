@@ -37,15 +37,25 @@ export default function Subscription() {
       return;
     }
 
-    // Create pending transaction for paid plans
-    const { error } = await supabase.from("transactions").insert({
+    // Dummy payment: auto-activate subscription (simulasi sukses)
+    const { error: txError } = await supabase.from("transactions").insert({
       user_id: user.id,
       plan_id: planId,
       amount: plan.price,
-      status: "pending",
+      status: "success",
     });
-    if (error) toast.error(error.message);
-    else toast.info("Transaksi dibuat. Integrasi pembayaran akan segera tersedia.");
+    if (txError) { toast.error(txError.message); return; }
+
+    const { error: subError } = await supabase.from("subscriptions").insert({
+      user_id: user.id,
+      plan_id: planId,
+      status: "active",
+    });
+    if (subError) toast.error(subError.message);
+    else {
+      toast.success(`Paket ${plan.name} berhasil diaktifkan!`);
+      window.location.reload();
+    }
   };
 
   return (

@@ -37,6 +37,7 @@ const App = () => (
               <Route path="/dashboard" element={<ErrorBoundary><ProtectedRoute><Dashboard /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/create" element={<ErrorBoundary><ProtectedRoute><CreateInvitation /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/invitations" element={<ErrorBoundary><ProtectedRoute><MyInvitations /></ProtectedRoute></ErrorBoundary>} />
+              <Route path="/dashboard/invitations/:id/edit" element={<ErrorBoundary><ProtectedRoute><CreateInvitation /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/invitations/:id/guests" element={<ErrorBoundary><ProtectedRoute><GuestManager /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/profile" element={<ErrorBoundary><ProtectedRoute><Profile /></ProtectedRoute></ErrorBoundary>} />
               <Route path="/dashboard/subscription" element={<ErrorBoundary><ProtectedRoute><Subscription /></ProtectedRoute></ErrorBoundary>} />

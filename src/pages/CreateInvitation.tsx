@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +21,14 @@ import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout, Smartphon
 const steps = ["Template", "Detail Acara", "Media", "Preview"];
 
 export default function CreateInvitation() {
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingMusic, setUploadingMusic] = useState(false);
   const [mode, setMode] = useState<"template" | "custom">("template");
@@ -52,6 +55,38 @@ export default function CreateInvitation() {
       if (data) setTemplates(data);
     });
   }, []);
+
+  // Load existing invitation for edit mode
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data, error } = await supabase.from("invitations").select("*").eq("id", id).single();
+      if (error || !data) { toast.error("Undangan tidak ditemukan"); navigate("/dashboard/invitations"); return; }
+
+      setForm({
+        template_id: data.template_id || "",
+        title: data.title || "",
+        event_type: data.event_type || "wedding",
+        event_name: data.event_name || "",
+        host_names: data.host_names || "",
+        event_date: data.event_date ? data.event_date.split("T")[0] : "",
+        event_time: data.event_time || "",
+        event_location: data.event_location || "",
+        event_description: data.event_description || "",
+        map_embed_url: data.map_embed_url || "",
+        cover_image_url: data.cover_image_url || "",
+        music_url: data.music_url || "",
+      });
+
+      if (data.custom_data && data.custom_data.mode === "custom") {
+        setMode("custom");
+        setCustomDesign({ ...DEFAULT_CUSTOM_DESIGN, ...data.custom_data });
+      } else if (data.template_id) {
+        setMode("template");
+      }
+      setInitialLoading(false);
+    })();
+  }, [id, navigate]);
 
   const updateForm = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -114,10 +149,36 @@ export default function CreateInvitation() {
       return;
     }
 
-    // === P0-1: QUOTA ENFORCEMENT (FIX) ===
+    const dbTemplate = templates.find((t) => t.id === form.template_id);
+    const customData = mode === "custom" ? customDesign : null;
+
+    if (isEditMode) {
+      // Edit mode: update existing invitation
+      const { error } = await supabase.from("invitations").update({
+        template_id: mode === "template" && dbTemplate ? form.template_id : null,
+        title: form.title,
+        event_type: form.event_type,
+        event_name: form.event_name,
+        host_names: form.host_names,
+        event_date: form.event_date ? new Date(form.event_date).toISOString() : null,
+        event_time: form.event_time,
+        event_location: form.event_location,
+        event_description: form.event_description,
+        map_embed_url: form.map_embed_url,
+        cover_image_url: form.cover_image_url || null,
+        music_url: form.music_url || null,
+        custom_data: customData,
+      }).eq("id", id);
+
+      if (error) toast.error(error.message);
+      else { toast.success("Undangan berhasil diperbarui!"); navigate("/dashboard/invitations"); }
+      setLoading(false);
+      return;
+    }
+
+    // === Create mode: QUOTA ENFORCEMENT ===
     const weekStart = getWeekStart();
     
-    // Cek subscription dan quota
     const { data: subscription } = await supabase
       .from("subscriptions")
       .select("*, subscription_plans(weekly_quota)")
@@ -127,7 +188,6 @@ export default function CreateInvitation() {
     
     const currentQuota = subscription?.subscription_plans?.weekly_quota || 0;
     
-    // Cek usage minggu ini
     const { data: usage } = await supabase
       .from("usage_logs")
       .select("invitation_count")
@@ -137,7 +197,6 @@ export default function CreateInvitation() {
     
     const currentUsage = usage?.invitation_count || 0;
     
-    // Reject jika quota habis
     if (currentUsage >= currentQuota) {
       toast.error(`Quota minggu ini habis! Limit: ${currentQuota} undangan. Upgrade plan untuk membuat lebih.`);
       setLoading(false);
@@ -145,10 +204,6 @@ export default function CreateInvitation() {
     }
     
     const slug = generateSlug();
-    const dbTemplate = templates.find((t) => t.id === form.template_id);
-
-    // Build custom_data
-    const customData = mode === "custom" ? customDesign : null;
 
     const { error } = await supabase.from("invitations").insert({
       user_id: user.id,
@@ -172,7 +227,6 @@ export default function CreateInvitation() {
     if (error) {
       toast.error(error.message);
     } else {
-      // Update usage log setelah berhasil
       if (usage) {
         await supabase.from("usage_logs").update({ invitation_count: usage.invitation_count + 1 }).eq("id", usage.id);
       } else {
@@ -184,14 +238,27 @@ export default function CreateInvitation() {
     setLoading(false);
   };
 
+  if (initialLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center space-y-2">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-sm text-muted-foreground">Memuat undangan...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="flex gap-6 max-w-7xl mx-auto">
         {/* Form side */}
         <div className="flex-1 min-w-0 space-y-6">
           <div>
-            <h1 className="text-2xl font-display font-bold">Buat Undangan Baru</h1>
-            <p className="text-muted-foreground">Ikuti langkah-langkah berikut</p>
+            <h1 className="text-2xl font-display font-bold">{isEditMode ? "Edit Undangan" : "Buat Undangan Baru"}</h1>
+            <p className="text-muted-foreground">{isEditMode ? "Perbarui detail undanganmu" : "Ikuti langkah-langkah berikut"}</p>
           </div>
 
           {/* Steps indicator */}
@@ -423,7 +490,7 @@ export default function CreateInvitation() {
                     </Button>
                   ) : (
                     <Button onClick={handleSubmit} disabled={loading || !form.title}>
-                      {loading ? "Menyimpan..." : "Buat Undangan"}
+                      {loading ? "Menyimpan..." : isEditMode ? "Simpan Perubahan" : "Buat Undangan"}
                     </Button>
                   )}
                 </div>
