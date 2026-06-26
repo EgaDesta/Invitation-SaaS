@@ -2,18 +2,14 @@
 -- ====================================================
 
 -- Seed subscription plans (sesuai skema tabel)
+-- Hapus dulu yang ada agar aman di-run ulang
+DELETE FROM subscription_plans;
 INSERT INTO subscription_plans (name, price, weekly_quota, description, features, is_active)
 VALUES
   ('Gratis', 0, 6, 'Coba undangan digital gratis', '["1 template", "50 tamu", "RSVP"]', true),
   ('Basic', 99000, 15, 'Untuk acara kecil hingga menengah', '["2 template", "200 tamu", "RSVP", "Musik latar"]', true),
   ('Premium', 199000, 50, 'Fitur lengkap untuk acara besar', '["Semua template", "1000 tamu", "RSVP", "Musik", "Google Maps"]', true),
-  ('Pro', 499000, 999, 'Solusi profesional tanpa batas', '["Semua template", "5000 tamu", "RSVP", "Musik", "Maps", "Custom domain", "Prioritas"]', true)
-ON CONFLICT (name) DO UPDATE SET
-  price = EXCLUDED.price,
-  weekly_quota = EXCLUDED.weekly_quota,
-  description = EXCLUDED.description,
-  features = EXCLUDED.features,
-  is_active = EXCLUDED.is_active;
+  ('Pro', 499000, 999, 'Solusi profesional tanpa batas', '["Semua template", "5000 tamu", "RSVP", "Musik", "Maps", "Custom domain", "Prioritas"]', true);
 
 -- Buat admin user (ganti email & password sesuai keinginanmu)
 DO $$
