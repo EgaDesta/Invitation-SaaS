@@ -16,7 +16,7 @@ import InvitationPreview from "@/components/InvitationPreview";
 import TemplateBuilder from "@/components/TemplateBuilder";
 import { TEMPLATE_CONFIGS } from "@/lib/templates";
 import { DEFAULT_CUSTOM_DESIGN, CustomDesignData } from "@/lib/customDesignTypes";
-import { isValidMapEmbedUrl } from "@/lib/utils";
+import { getWeekStart, isValidMapEmbedUrl } from "@/lib/utils";
 import { notifyEmail } from "@/lib/notifyEmail";
 import { ArrowLeft, ArrowRight, Upload, Image, Music, Palette, Layout, Smartphone, Tablet, Monitor, X } from "lucide-react";
 
@@ -221,6 +221,33 @@ export default function CreateInvitation() {
       return;
     }
 
+    // === Create mode: QUOTA ENFORCEMENT ===
+    const weekStart = getWeekStart();
+    
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("*, subscription_plans(weekly_quota)")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+    
+    const currentQuota = subscription?.subscription_plans?.weekly_quota || 0;
+    
+    const { data: usage } = await supabase
+      .from("usage_logs")
+      .select("invitation_count")
+      .eq("user_id", user.id)
+      .eq("week_start", weekStart)
+      .maybeSingle();
+    
+    const currentUsage = usage?.invitation_count || 0;
+    
+    if (currentUsage >= currentQuota) {
+      toast.error(`Quota minggu ini habis! Limit: ${currentQuota} undangan. Upgrade plan untuk membuat lebih.`);
+      setLoading(false);
+      return;
+    }
+    
     const slug = generateSlug();
 
     const { data: newInv, error } = await supabase.from("invitations").insert({
@@ -247,7 +274,12 @@ export default function CreateInvitation() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Undangan berhasil dibuat!");
+      if (usage) {
+        await supabase.from("usage_logs").update({ invitation_count: usage.invitation_count + 1 }).eq("id", usage.id);
+      } else {
+        await supabase.from("usage_logs").insert({ user_id: user.id, week_start: weekStart, invitation_count: 1 });
+      }
+      toast.success(`Undangan berhasil dibuat! Sisa quota: ${currentQuota - currentUsage - 1}`);
       if (newInv && form.notify_email) {
         notifyEmail({ invitationId: newInv.id, type: "invitation_created" });
       }
