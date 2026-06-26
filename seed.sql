@@ -1,39 +1,52 @@
--- Seed subscription plans
-INSERT INTO subscription_plans (name, price, duration_days, max_invitations, features, is_active)
+-- ⚠️ GANTI EMAIL & PASSWORD DI BAWAH INI SEBELUM RUN ⚠️
+-- ====================================================
+
+-- Seed subscription plans (sesuai skema tabel)
+INSERT INTO subscription_plans (name, price, weekly_quota, description, features, is_active)
 VALUES
-  ('Gratis', 0, 30, 1, '{"templates": ["basic"], "guests": 50, "custom_domain": false}', true),
-  ('Basic', 99000, 30, 5, '{"templates": ["basic", "modern"], "guests": 200, "custom_domain": false, "music": true}', true),
-  ('Premium', 199000, 60, 20, '{"templates": ["all"], "guests": 1000, "custom_domain": true, "music": true, "qr_code": true, "maps": true}', true),
-  ('Pro', 499000, 90, 100, '{"templates": ["all", "premium"], "guests": 5000, "custom_domain": true, "music": true, "qr_code": true, "maps": true, "priority_support": true}', true)
+  ('Gratis', 0, 6, 'Coba undangan digital gratis', '["1 template", "50 tamu", "RSVP"]', true),
+  ('Basic', 99000, 15, 'Untuk acara kecil hingga menengah', '["2 template", "200 tamu", "RSVP", "Musik latar"]', true),
+  ('Premium', 199000, 50, 'Fitur lengkap untuk acara besar', '["Semua template", "1000 tamu", "RSVP", "Musik", "Google Maps"]', true),
+  ('Pro', 499000, 999, 'Solusi profesional tanpa batas', '["Semua template", "5000 tamu", "RSVP", "Musik", "Maps", "Custom domain", "Prioritas"]', true)
 ON CONFLICT (name) DO UPDATE SET
   price = EXCLUDED.price,
-  duration_days = EXCLUDED.duration_days,
-  max_invitations = EXCLUDED.max_invitations,
+  weekly_quota = EXCLUDED.weekly_quota,
+  description = EXCLUDED.description,
   features = EXCLUDED.features,
   is_active = EXCLUDED.is_active;
 
--- ⚠️ SECURITY WARNING: Hapus atau ganti seed ini sebelum production!
--- Admin user (email: admin@undanganku.id)
--- Password default harus SEGERA diganti setelah first login.
-INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_user_meta_data)
-SELECT
-  gen_random_uuid(),
-  'admin@undanganku.id',
-  crypt('CHANGE_ME_ADMIN_123!', gen_salt('bf')),
-  now(),
-  '{"full_name": "Admin UndanganKu"}'
-WHERE NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@undanganku.id');
+-- Buat admin user (ganti email & password sesuai keinginanmu)
+DO $$
+DECLARE
+  _email TEXT := 'admin@undanganku.id';      -- <<< GANTI EMAIL
+  _password TEXT := 'CHANGE_ME_ADMIN_123!';  -- <<< GANTI PASSWORD
+  _user_id UUID;
+BEGIN
+  -- Skip jika sudah ada
+  IF EXISTS (SELECT 1 FROM auth.users WHERE email = _email) THEN
+    RAISE NOTICE 'User % sudah ada, skip', _email;
+    RETURN;
+  END IF;
 
--- Create profile for admin
-INSERT INTO profiles (id, full_name, email, created_at)
-SELECT id, raw_user_meta_data->>'full_name', email, created_at
-FROM auth.users
-WHERE email = 'admin@undanganku.id'
-ON CONFLICT (id) DO NOTHING;
+  -- Insert ke auth.users
+  INSERT INTO auth.users (email, encrypted_password, email_confirmed_at, raw_user_meta_data)
+  VALUES (
+    _email,
+    crypt(_password, gen_salt('bf')),
+    now(),
+    jsonb_build_object('full_name', 'Admin UndanganKu')
+  )
+  RETURNING id INTO _user_id;
 
--- Grant admin role
-INSERT INTO user_roles (user_id, role)
-SELECT id, 'admin'
-FROM auth.users
-WHERE email = 'admin@undanganku.id'
-ON CONFLICT (user_id, role) DO NOTHING;
+  -- Profile
+  INSERT INTO public.profiles (user_id, full_name, is_onboarded)
+  VALUES (_user_id, 'Admin UndanganKu', true)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  -- Grant admin role
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (_user_id, 'admin')
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  RAISE NOTICE 'User admin berhasil dibuat: % / %', _email, _password;
+END $$;
