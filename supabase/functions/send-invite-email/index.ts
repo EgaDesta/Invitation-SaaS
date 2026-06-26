@@ -1,18 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "undangan@undanganku.my.id";
-
-interface Payload {
-  invitationId: string;
-  guestId?: string;
-  type: "guest_added" | "rsvp_updated" | "invitation_created";
-}
-
 serve(async (req) => {
   try {
-    const payload: Payload = await req.json();
+    const payload = await req.json();
     const { invitationId, guestId, type } = payload;
 
     const supabase = createClient(
@@ -20,99 +11,51 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: invitation, error: invErr } = await supabase
+    const { data: invitation } = await supabase
       .from("invitations")
-      .select("id, title, slug, event_date, event_time, location, notify_email, profiles!inner(email, full_name)")
+      .select("id, title, slug, user_id, notify_email")
       .eq("id", invitationId)
       .single();
 
-    if (invErr || !invitation) {
-      return new Response(JSON.stringify({ error: "Invitation not found" }), { status: 404 });
+    if (!invitation || !invitation.notify_email) {
+      return new Response(JSON.stringify({ message: "Skipped" }), { status: 200 });
     }
 
-    if (!invitation.notify_email) {
-      return new Response(JSON.stringify({ message: "Email notifications disabled" }), { status: 200 });
+    // Get owner email from auth.users
+    const { data: userData } = await supabase.auth.admin.getUserById(invitation.user_id);
+    const ownerEmail = userData?.user?.email;
+    if (!ownerEmail) {
+      return new Response(JSON.stringify({ error: "Owner email not found" }), { status: 404 });
     }
 
-    const ownerEmail = (invitation.profiles as unknown as { email: string }).email;
-    const ownerName = (invitation.profiles as unknown as { full_name: string }).full_name || "Pemilik Undangan";
+    const ownerName = userData.user.user_metadata?.full_name || "Pemilik Undangan";
 
-    if (type === "guest_added" && guestId) {
-      const { data: guest } = await supabase.from("guests").select("name, phone").eq("id", guestId).single();
-      if (!guest) return new Response(JSON.stringify({ error: "Guest not found" }), { status: 404 });
-
+    if (type === "invitation_created") {
       await sendEmail({
         to: [ownerEmail],
-        subject: `Tamu Baru: ${guest.name}`,
-        html: `
-          <h2>Halo ${ownerName}!</h2>
-          <p>Tamu baru telah ditambahkan ke undangan <strong>${invitation.title}</strong>:</p>
-          <ul>
-            <li><strong>Nama:</strong> ${guest.name}</li>
-            ${guest.phone ? `<li><strong>Telepon:</strong> ${guest.phone}</li>` : ""}
-          </ul>
-          <p>
-            <a href="${Deno.env.get("PUBLIC_URL") || "http://localhost:5173"}/invite/${invitation.slug}" 
-               style="display:inline-block;padding:12px 24px;background:#7c3aed;color:white;text-decoration:none;border-radius:8px">
-              Lihat Undangan
-            </a>
-          </p>
-        `,
+        subject: `Undangan "${invitation.title}" Dibuat`,
+        html: `<h2>Halo ${ownerName}!</h2><p>Undangan <strong>${invitation.title}</strong> berhasil dibuat.</p><p><a href="${Deno.env.get("PUBLIC_URL") || ""}/invite/${invitation.slug}" style="display:inline-block;padding:12px 24px;background:#7c3aed;color:white;text-decoration:none;border-radius:8px">Lihat Undangan</a></p>`,
       });
     }
 
-    if (type === "rsvp_updated" && guestId) {
+    if ((type === "guest_added" || type === "rsvp_updated") && guestId) {
       const { data: guest } = await supabase.from("guests").select("name, rsvp_status").eq("id", guestId).single();
       if (!guest) return new Response(JSON.stringify({ error: "Guest not found" }), { status: 404 });
 
-      const statusLabels: Record<string, string> = {
-        attending: "Akan Hadir",
-        not_attending: "Tidak Hadir",
-        maybe: "Mungkin",
-        pending: "Belum Respon",
-      };
+      const labels: Record<string, string> = { attending: "Akan Hadir", not_attending: "Tidak Hadir", maybe: "Mungkin", pending: "Belum Respon" };
+
+      const subject = type === "guest_added"
+        ? `Tamu Baru: ${guest.name}`
+        : `${guest.name} ${labels[guest.rsvp_status] || "Update RSVP"}`;
+
+      const body = type === "guest_added"
+        ? `<p><strong>${guest.name}</strong> telah ditambahkan sebagai tamu.</p>`
+        : `<p><strong>${guest.name}</strong> mengupdate RSVP: <strong style="color:#7c3aed">${labels[guest.rsvp_status] || guest.rsvp_status}</strong></p>`;
 
       await sendEmail({
         to: [ownerEmail],
-        subject: `${guest.name} ${guest.rsvp_status === "attending" ? "Akan Hadir" : "Update RSVP"}`,
-        html: `
-          <h2>Update RSVP</h2>
-          <p><strong>${guest.name}</strong> telah mengupdate RSVP untuk <strong>${invitation.title}</strong>:</p>
-          <p style="font-size:18px;font-weight:bold;color:#7c3aed">
-            ${statusLabels[guest.rsvp_status] || guest.rsvp_status}
-          </p>
-          <p>
-            <a href="${Deno.env.get("PUBLIC_URL") || "http://localhost:5173"}/invite/${invitation.slug}"
-               style="display:inline-block;padding:12px 24px;background:#7c3aed;color:white;text-decoration:none;border-radius:8px">
-              Lihat Undangan
-            </a>
-          </p>
-        `,
-      });
-    }
-
-    if (type === "invitation_created") {
-      const { data: guests } = await supabase.from("guests").select("name, phone").eq("invitation_id", invitationId);
-
-      await sendEmail({
-        to: [ownerEmail],
-        subject: `Undangan "${invitation.title}" Telah Dibuat`,
-        html: `
-          <h2>Selamat ${ownerName}!</h2>
-          <p>Undangan digital <strong>${invitation.title}</strong> telah berhasil dibuat.</p>
-          <ul>
-            <li><strong>Tanggal:</strong> ${invitation.event_date || "-"}</li>
-            <li><strong>Waktu:</strong> ${invitation.event_time || "-"}</li>
-            <li><strong>Lokasi:</strong> ${invitation.location || "-"}</li>
-            ${guests && guests.length > 0 ? `<li><strong>Tamu:</strong> ${guests.length} orang</li>` : ""}
-          </ul>
-          <p>
-            <a href="${Deno.env.get("PUBLIC_URL") || "http://localhost:5173"}/invite/${invitation.slug}"
-               style="display:inline-block;padding:12px 24px;background:#7c3aed;color:white;text-decoration:none;border-radius:8px">
-              Lihat Undangan
-            </a>
-          </p>
-        `,
+        subject,
+        html: `<h2>${type === "guest_added" ? "Tamu Baru" : "Update RSVP"}</h2>${body}<p><a href="${Deno.env.get("PUBLIC_URL") || ""}/invite/${invitation.slug}" style="display:inline-block;padding:12px 24px;background:#7c3aed;color:white;text-decoration:none;border-radius:8px">Lihat Undangan</a></p>`,
       });
     }
 
@@ -126,20 +69,16 @@ async function sendEmail({ to, subject, html }: { to: string[]; subject: string;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
+      Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: FROM_EMAIL,
+      from: Deno.env.get("FROM_EMAIL") || "undangan@undanganku.my.id",
       to,
       subject,
       html,
     }),
   });
-  if (!res.ok) {
-    const err = await res.text();
-    console.error("Resend error:", err);
-    throw new Error(`Failed to send email: ${err}`);
-  }
+  if (!res.ok) throw new Error(await res.text());
   return res.json();
 }

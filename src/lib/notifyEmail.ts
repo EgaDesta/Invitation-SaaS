@@ -8,16 +8,9 @@ export async function notifyEmail(payload: {
   type: "guest_added" | "rsvp_updated" | "invitation_created";
 }) {
   try {
-    const session = await supabase.auth.getSession();
-    const token = session.data.session?.access_token;
-    if (!token) return;
-
     await fetch(EDGE_FUNCTION_URL, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
   } catch {
