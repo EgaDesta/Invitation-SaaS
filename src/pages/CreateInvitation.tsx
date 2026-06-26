@@ -231,7 +231,7 @@ export default function CreateInvitation() {
       .eq("status", "active")
       .maybeSingle();
     
-    const currentQuota = subscription?.subscription_plans?.weekly_quota || 0;
+    const currentQuota = subscription?.subscription_plans?.weekly_quota || 6;
     
     const { data: usage } = await supabase
       .from("usage_logs")
