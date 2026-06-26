@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -459,9 +460,12 @@ export default function CreateInvitation() {
                       <Input placeholder="https://www.google.com/maps/embed?pb=..." value={form.map_embed_url} onChange={(e) => updateForm("map_embed_url", e.target.value)} maxLength={500} />
                       <p className="text-xs text-muted-foreground">Buka Google Maps → Share → Embed a map → Salin URL dari src="..."</p>
                     </div>
-                    <div className="flex items-center gap-2 pt-2">
-                      <input type="checkbox" id="notify_email" checked={form.notify_email} onChange={(e) => updateForm("notify_email", e.target.checked)} className="rounded border-border" />
-                      <Label htmlFor="notify_email" className="text-sm cursor-pointer">Kirim notifikasi email ketika ada tamu baru atau RSVP</Label>
+                    <div className="flex items-center justify-between p-3 rounded-lg border bg-secondary/20">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="notify_email" className="text-sm font-medium cursor-pointer">Notifikasi Email</Label>
+                        <p className="text-xs text-muted-foreground">Kirim notifikasi ketika ada tamu baru atau RSVP</p>
+                      </div>
+                      <Switch id="notify_email" checked={form.notify_email} onCheckedChange={(v) => updateForm("notify_email", v)} />
                     </div>
                   </div>
                 )}
