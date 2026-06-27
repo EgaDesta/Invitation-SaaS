@@ -60,7 +60,7 @@ export default function Demo() {
             <ArrowLeft className="w-4 h-4" /> Kembali
           </Link>
           <Link to="/" className="font-display text-xl font-bold text-primary">
-            Undangan<span className="text-accent">ku</span>
+              <img src="/logo.png" alt="Hadira" className="h-7 inline-block mr-1.5" />Hadira
           </Link>
           <Link to="/auth?tab=signup">
             <Button size="sm">Daftar Gratis</Button>

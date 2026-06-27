@@ -26,7 +26,7 @@ const testimonials = [
   { name: "Sarah & Andi", role: "Pernikahan", text: "Membuat undangan pernikahan jadi sangat mudah! Tamu kami suka dengan tampilan digitalnya. Fitur RSVP dan countdown sangat membantu." },
   { name: "Rina Wijaya", role: "Ulang Tahun", text: "Anak-anak senang undangan ulang tahunnya interaktif. Bisa upload galeri foto dan musik favorit. Recommended!" },
   { name: "PT Maju Bersama", role: "Corporate Event", text: "Platform yang profesional untuk undangan corporate. Fitur guest management dan QR code sangat berguna untuk acara besar." },
-  { name: "Dian Permata", role: "Wedding Organizer", text: "Saya pakai Undanganku untuk semua klien wedding. Template-nya elegan, custom design-nya keren, dan client puas!" },
+  { name: "Dian Permata", role: "Wedding Organizer", text: "Saya pakai Hadira untuk semua klien wedding. Template-nya elegan, custom design-nya keren, dan client puas!" },
 ];
 
 const faqItems = [
@@ -51,15 +51,15 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Undanganku - Platform Undangan Digital #1 Indonesia"
-        description="Buat undangan digital pernikahan, ulang tahun & acara spesial dengan template premium, RSVP online, countdown timer, Google Maps & musik latar. Mulai gratis!"
+        title="Hadira - Platform Undangan Digital #1 Indonesia"
+        description="Hadira - menghadirkan setiap moment. Buat undangan digital pernikahan, ulang tahun & acara spesial dengan template premium, RSVP online, countdown timer, Google Maps & musik latar. Mulai gratis!"
         canonical="/"
       />
       {/* Navbar */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/" className="font-display text-2xl font-bold text-primary">
-            Undangan<span className="text-accent">ku</span>
+            <img src="/logo.png" alt="Hadira" className="h-7 inline-block mr-1.5" />Hadira
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/auth">
@@ -155,7 +155,7 @@ export default function Landing() {
               Dicintai oleh Ribuan Pengguna
             </motion.h2>
             <motion.p variants={fadeUp} custom={1} className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Lihat apa kata mereka tentang Undanganku
+              Lihat apa kata mereka tentang Hadira
             </motion.p>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-6">
@@ -239,7 +239,7 @@ export default function Landing() {
               Pertanyaan Umum
             </motion.h2>
             <motion.p variants={fadeUp} custom={1} className="text-muted-foreground text-lg">
-              Semua yang perlu kamu tahu tentang Undanganku
+              Semua yang perlu kamu tahu tentang Hadira
             </motion.p>
           </motion.div>
           <div className="space-y-3">
@@ -267,11 +267,12 @@ export default function Landing() {
       {/* Footer */}
       <footer className="py-12 px-4 border-t bg-secondary/20">
         <div className="container mx-auto text-center">
-          <p className="font-display text-xl font-bold text-primary mb-2">
-            Undangan<span className="text-accent">ku</span>
+          <p className="font-display text-xl font-bold text-primary mb-1">
+            <img src="/logo.png" alt="Hadira" className="h-6 inline-block mr-1.5" />Hadira
           </p>
+          <p className="text-xs text-muted-foreground mb-3">menghadirkan setiap moment</p>
           <p className="text-muted-foreground text-sm">
-            © 2026 Undanganku. Platform undangan digital terbaik di Indonesia.
+            © 2026 Hadira. Platform undangan digital terbaik di Indonesia.
           </p>
         </div>
       </footer>

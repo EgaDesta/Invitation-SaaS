@@ -34,7 +34,7 @@ export default function Onboarding() {
       setLoading(true);
       await supabase.from("profiles").update({ is_onboarded: true }).eq("user_id", user?.id);
       setLoading(false);
-      toast.success("Selamat datang di Undanganku!");
+      toast.success("Selamat datang di Hadira!");
       navigate("/dashboard", { replace: true });
       return;
     }

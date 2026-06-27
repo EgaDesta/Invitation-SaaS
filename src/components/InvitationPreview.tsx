@@ -226,7 +226,7 @@ export default function InvitationPreview({ form, templateData }: PreviewProps) 
 
         {/* Footer */}
         <div className="text-center pt-4 border-t opacity-50" style={{ borderColor: `${colors.secondary}50` }}>
-          <p className="text-[10px]">Dibuat dengan ❤️ menggunakan Undanganku</p>
+          <p className="text-[10px]">Dibuat dengan ❤️ menggunakan Hadira</p>
         </div>
       </div>
     </div>

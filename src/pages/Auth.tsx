@@ -67,7 +67,7 @@ export default function Auth() {
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="text-center pb-2">
             <Link to="/" className="font-display text-3xl font-bold text-primary mb-2 block">
-              Undangan<span className="text-accent">ku</span>
+              <img src="/logo.png" alt="Hadira" className="h-7 inline-block mr-1.5" />Hadira
             </Link>
             <CardTitle className="font-display text-xl">
               {isSignUp ? "Buat Akun Baru" : "Masuk ke Akunmu"}

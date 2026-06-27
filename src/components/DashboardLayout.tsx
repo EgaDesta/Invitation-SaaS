@@ -68,8 +68,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         )}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-          <Link to="/" className="font-display text-xl font-bold text-foreground">
-            Undangan<span className="text-accent">ku</span>
+          <Link to="/" className="font-display text-xl font-bold text-foreground flex items-center gap-1.5">
+            <img src="/logo.png" alt="Hadira" className="h-6" />Hadira
           </Link>
           <button className="lg:hidden text-foreground" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />

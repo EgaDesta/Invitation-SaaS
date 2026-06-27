@@ -11,8 +11,8 @@ interface SEOProps {
 }
 
 export default function SEO({
-  title = "Undanganku - Buat Undangan Digital Pernikahan & Acara Online",
-  description = "Buat undangan digital pernikahan, ulang tahun & acara spesial dengan template premium, RSVP, countdown, Google Maps & musik latar. Mulai gratis!",
+  title = "Hadira - Buat Undangan Digital Pernikahan & Acara Online",
+  description = "Hadira - menghadirkan setiap moment. Buat undangan digital pernikahan, ulang tahun & acara spesial dengan template premium, RSVP, countdown, Google Maps & musik latar. Mulai gratis!",
   canonical,
   ogImage = "/og-image.png",
   ogType = "website",
@@ -37,7 +37,7 @@ export default function SEO({
       <meta property="og:url" content={fullCanonical} />
       <meta property="og:image" content={fullOgImage} />
       <meta property="og:locale" content="id_ID" />
-      <meta property="og:site_name" content="Undanganku" />
+      <meta property="og:site_name" content="Hadira" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

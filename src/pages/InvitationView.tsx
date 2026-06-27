@@ -318,7 +318,7 @@ export default function InvitationView() {
       {patternOverlay}
 
       <SEO
-        title={`${invitation.title} - Undangan Digital | Undanganku`}
+        title={`${invitation.title} - Undangan Digital | Hadira`}
         description={invitation.event_description || `Anda diundang ke ${invitation.title}.`}
         canonical={`/invite/${slug}`}
         ogImage={invitation.cover_image_url || "/og-image.png"}
@@ -704,8 +704,9 @@ export default function InvitationView() {
             <p className="flex items-center justify-center gap-2">
               Dibuat dengan <Heart className="w-4 h-4" style={{ color: primaryColor }} fill="currentColor" /> menggunakan
               <span className="font-bold" style={{ fontFamily: headingFont, background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                Undanganku
+                Hadira
               </span>
+              <span className="text-xs opacity-60">menghadirkan setiap moment</span>
             </p>
           </motion.footer>
         </div>
